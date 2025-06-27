@@ -38,7 +38,7 @@ public class MatchRepositoryTest {
     private StateEntity sp;
     private ClubEntity gremio;
     private Long gremioId;
-    private StadiumEntity stadium1;
+    private StadiumEntity maracana;
     private Pageable pageable;
     @Autowired
     private StadiumRepository stadiumRepository;
@@ -64,16 +64,16 @@ public class MatchRepositoryTest {
 
         gremioId = gremio.getId();
 
-        stadium1 = stadiumRepository.save(new StadiumEntity("Stadium1"));
-        StadiumEntity stadium2 = stadiumRepository.save(new StadiumEntity("Stadium2"));
+        maracana = stadiumRepository.save(new StadiumEntity("Maracanã"));
+        StadiumEntity morumbi = stadiumRepository.save(new StadiumEntity("Morumbi"));
 
-        MatchEntity match1 = new MatchEntity(gremio, flamengo, 2, 1,
-                stadium1, LocalDateTime.of(2015, 10, 5, 12, 45));
+        MatchEntity gremioVsFlamengoAtMaracana = new MatchEntity(gremio, flamengo, 2, 1,
+                maracana, LocalDateTime.of(2015, 10, 5, 12, 45));
 
-        MatchEntity match2 = new MatchEntity(corinthians, gremio, 1, 1,
-                stadium2, LocalDateTime.of(2020, 1, 25, 15, 50));
+        MatchEntity corinthiansVsGremioAtMorumbi = new MatchEntity(corinthians, gremio, 1, 1,
+                morumbi, LocalDateTime.of(2020, 1, 25, 15, 50));
 
-        matchRepository.saveAll(List.of(match1, match2));
+        matchRepository.saveAll(List.of(gremioVsFlamengoAtMaracana, corinthiansVsGremioAtMorumbi));
     }
 
     @Test
@@ -88,21 +88,21 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldFilterMatchesByStadium(){
-        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(null, stadium1, pageable);
+        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(null, maracana, pageable);
 
         Assertions.assertNotNull(matches);
         Assertions.assertEquals(1, matches.getTotalElements());
-        Assertions.assertTrue(matches.stream().allMatch(match -> stadium1.equals(match.getStadium())));
+        Assertions.assertTrue(matches.stream().allMatch(match -> maracana.equals(match.getStadium())));
     }
 
     @Test
     public void shouldFilterMatchesByClubAndStadium(){
-        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremio, stadium1, pageable);
+        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremio, maracana, pageable);
 
         Assertions.assertNotNull(matches);
         Assertions.assertEquals(1, matches.getTotalElements());
         Assertions.assertTrue(matches.stream().allMatch(match -> gremio.equals(match.getHomeClub())));
-        Assertions.assertTrue(matches.stream().allMatch(match -> stadium1.equals(match.getStadium())));
+        Assertions.assertTrue(matches.stream().allMatch(match -> maracana.equals(match.getStadium())));
     }
 
     @Test

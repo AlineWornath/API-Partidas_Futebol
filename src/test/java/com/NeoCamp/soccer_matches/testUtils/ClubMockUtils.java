@@ -10,17 +10,17 @@ import java.time.LocalDate;
 
 public class ClubMockUtils {
     public static ClubEntity gremio() {
-        return new ClubEntity("Grêmio", StateMockUtils.rs(),
+        return new ClubEntity(1L, "Grêmio", StateMockUtils.rs(),
                 LocalDate.of(1920, 5, 30), true);
     }
 
     public static ClubEntity flamengo() {
-        return new ClubEntity("Flamengo", StateMockUtils.rj(),
+        return new ClubEntity(2L,"Flamengo", StateMockUtils.rj(),
                 LocalDate.of(1950, 7,15), true);
     }
 
     public static ClubEntity corinthians() {
-        return new ClubEntity("Corinthians", StateMockUtils.sp(),
+        return new ClubEntity(3L,"Corinthians", StateMockUtils.sp(),
                 LocalDate.of(1971, 6, 23), true);
     }
 
@@ -57,7 +57,18 @@ public class ClubMockUtils {
 
 
     public static ClubRequestDto gremioRequestDto() {
-        return new ClubRequestDto("Grêmio", "RS",  LocalDate.of(2005, 9, 15), true);
+        return new ClubRequestDto("Grêmio", "RS",
+                LocalDate.of(2005, 9, 15), true);
+    }
+
+    public static ClubRequestDto flamengoRequestDto() {
+        return new ClubRequestDto("Flamengo", "RJ",
+                LocalDate.of(2003, 1, 10), true);
+    }
+
+    public static ClubRequestDto corinthiansRequestDto() {
+        return new ClubRequestDto("Corinthians", "SP",
+                LocalDate.of(1920, 6, 23), true);
     }
 
     public static ClubRequestDto customRequestDto(String name, String stateCode, LocalDate creationDate, Boolean active) {

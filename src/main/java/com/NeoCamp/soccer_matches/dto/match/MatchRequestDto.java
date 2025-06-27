@@ -19,12 +19,6 @@ public class MatchRequestDto {
     @NotNull(message = "Field away club is required")
     private Long awayClubId;
 
-    @NotNull(message = "Field stadium is required")
-    private Long stadiumId;
-
-    @NotNull(message = "Field match date and time is required")
-    private LocalDateTime matchDatetime;
-
     @NotNull(message = "Field home goals is required")
     @Min(value = 0, message = "Field home goals cannot be negative")
     private Integer homeGoals;
@@ -32,4 +26,10 @@ public class MatchRequestDto {
     @NotNull(message = "Field away goals is required")
     @Min(value = 0, message = "Field home goals cannot be negative")
     private Integer awayGoals;
+
+    @NotNull(message = "Field stadium is required")
+    private Long stadiumId;
+
+    @NotNull(message = "Field match date and time is required")
+    private LocalDateTime matchDatetime;
 }
