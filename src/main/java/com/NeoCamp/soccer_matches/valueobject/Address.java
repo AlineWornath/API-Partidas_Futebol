@@ -1,6 +1,6 @@
 package com.neocamp.soccer_matches.valueobject;
 
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,5 +15,5 @@ public class Address {
     private String street;
     private String neighborhood;
     private String city;
-    private StateCode stateCode;
+    private StateCodeEnum stateCodeEnum;
 }

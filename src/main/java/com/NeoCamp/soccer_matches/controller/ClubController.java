@@ -2,8 +2,8 @@ package com.neocamp.soccer_matches.controller;
 
 import com.neocamp.soccer_matches.dto.club.*;
 import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
-import com.neocamp.soccer_matches.enums.RankingOrder;
-import com.neocamp.soccer_matches.enums.MatchFilter;
+import com.neocamp.soccer_matches.enums.RankingOrderEnum;
+import com.neocamp.soccer_matches.enums.MatchFilterEnum;
 import com.neocamp.soccer_matches.service.ClubService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class ClubController {
     @GetMapping("/{id}/stats")
     public ResponseEntity<ClubStatsResponseDto> getClubStats(
             @PathVariable Long id,
-            @RequestParam(required = false) MatchFilter filter) {
+            @RequestParam(required = false) MatchFilterEnum filter) {
         ClubStatsResponseDto clubStats = clubService.getClubStats(id, filter);
         return ResponseEntity.status(HttpStatus.OK).body(clubStats);
     }
@@ -49,7 +49,7 @@ public class ClubController {
     @GetMapping("/{id}/opponents/stats")
     public ResponseEntity<List<ClubVersusClubStatsDto>> getClubVersusOpponentsStats(
             @PathVariable Long id,
-            @RequestParam(required = false) MatchFilter filter) {
+            @RequestParam(required = false) MatchFilterEnum filter) {
         List<ClubVersusClubStatsDto> opponentsStats = clubService.getClubVersusOpponentsStats(id,
                 filter);
         return ResponseEntity.status(HttpStatus.OK).body(opponentsStats);
@@ -59,14 +59,14 @@ public class ClubController {
     public ResponseEntity<HeadToHeadResponseDto> getHeadToHeadStats(
             @PathVariable Long clubId,
             @PathVariable Long opponentId,
-            @RequestParam(required = false) MatchFilter filter) {
+            @RequestParam(required = false) MatchFilterEnum filter) {
         HeadToHeadResponseDto headToHeadStats = clubService.getHeadToHeadStats(clubId, opponentId, filter);
         return ResponseEntity.status(HttpStatus.OK).body(headToHeadStats);
     }
 
     @GetMapping("/ranking")
-    public ResponseEntity<List<ClubRankingDto>>  getClubRanking(RankingOrder rankingOrder) {
-        List<ClubRankingDto> ranking = clubService.getClubRanking(rankingOrder);
+    public ResponseEntity<List<ClubRankingDto>>  getClubRanking(RankingOrderEnum rankingOrderEnum) {
+        List<ClubRankingDto> ranking = clubService.getClubRanking(rankingOrderEnum);
         return ResponseEntity.status(HttpStatus.OK).body(ranking);
     }
 

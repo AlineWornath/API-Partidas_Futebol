@@ -6,9 +6,9 @@ import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.RankingOrder;
-import com.neocamp.soccer_matches.enums.MatchFilter;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.RankingOrderEnum;
+import com.neocamp.soccer_matches.enums.MatchFilterEnum;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.ClubMapper;
 import com.neocamp.soccer_matches.mapper.MatchMapper;
@@ -36,7 +36,7 @@ public class ClubService {
     public Page<ClubResponseDto> listClubsByFilters(String name, String stateCode, Boolean active, Pageable pageable) {
         StateEntity homeState = null;
         if (stateCode != null) {
-            homeState = stateService.findByCode(StateCode.valueOf(stateCode.toUpperCase()));
+            homeState = stateService.findByCode(StateCodeEnum.valueOf(stateCode.toUpperCase()));
         }
 
         Page<ClubEntity> clubs = clubRepository.listClubsByFilters(name, homeState, active, pageable);
@@ -54,7 +54,7 @@ public class ClubService {
                 .orElseThrow(() -> new EntityNotFoundException("Club not found: " + id));
     }
 
-    public ClubStatsResponseDto getClubStats(Long id, MatchFilter filter) {
+    public ClubStatsResponseDto getClubStats(Long id, MatchFilterEnum filter) {
         findEntityById(id);
 
         Boolean isHome = null;
@@ -70,7 +70,7 @@ public class ClubService {
         return matchRepository.getClubStats(id, isHome, isAway);
     }
 
-    public List<ClubVersusClubStatsDto> getClubVersusOpponentsStats(Long id, MatchFilter filter) {
+    public List<ClubVersusClubStatsDto> getClubVersusOpponentsStats(Long id, MatchFilterEnum filter) {
         findEntityById(id);
 
         Boolean isHome = null;
@@ -86,7 +86,7 @@ public class ClubService {
         return matchRepository.getClubVersusOpponentsStats(id, isHome, isAway);
     }
 
-    public HeadToHeadResponseDto getHeadToHeadStats(Long clubId, Long opponentId, MatchFilter filter) {
+    public HeadToHeadResponseDto getHeadToHeadStats(Long clubId, Long opponentId, MatchFilterEnum filter) {
         findEntityById(clubId);
         findEntityById(opponentId);
 
@@ -111,10 +111,10 @@ public class ClubService {
         return new HeadToHeadResponseDto(stats, matches);
     }
 
-    public List<ClubRankingDto> getClubRanking(RankingOrder rankingOrder) {
+    public List<ClubRankingDto> getClubRanking(RankingOrderEnum rankingOrderEnum) {
         List<ClubRankingDto> ranking = new ArrayList<>();
 
-        switch (rankingOrder) {
+        switch (rankingOrderEnum) {
             case MATCHES -> ranking = matchRepository.getClubRankingByTotalMatches();
             case WINS -> ranking = matchRepository.getClubRankingByTotalWins();
             case GOALS -> ranking = matchRepository.getClubRankingByTotalGoals();
@@ -126,7 +126,7 @@ public class ClubService {
     public ClubResponseDto save(ClubRequestDto clubRequestDto) {
         validateStateCode(clubRequestDto.getStateCode());
 
-        StateEntity homeState = stateService.findByCode(StateCode.valueOf(clubRequestDto.getStateCode()));
+        StateEntity homeState = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
         ClubEntity club = clubMapper.toEntity(clubRequestDto, homeState);
         ClubEntity savedClub = clubRepository.save(club);
 
@@ -137,12 +137,10 @@ public class ClubService {
         ClubEntity club = findEntityById(id);
 
         validateStateCode(clubRequestDto.getStateCode());
-        StateEntity state = stateService.findByCode(StateCode.valueOf(clubRequestDto.getStateCode()));
-
-        club.setName(clubRequestDto.getName());
+        StateEntity state = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
         club.setHomeState(state);
-        club.setCreationDate(clubRequestDto.getCreationDate());
-        club.setActive(clubRequestDto.getActive());
+
+        clubMapper.updateEntityFromDto(clubRequestDto, club);
 
         ClubEntity updatedClub = clubRepository.save(club);
         return clubMapper.toDto(updatedClub);
@@ -156,7 +154,7 @@ public class ClubService {
 
     private void validateStateCode(String code) {
         try {
-            StateCode.valueOf(code.toUpperCase());
+            StateCodeEnum.valueOf(code.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new BusinessException("Invalid state code: " + code);
         }

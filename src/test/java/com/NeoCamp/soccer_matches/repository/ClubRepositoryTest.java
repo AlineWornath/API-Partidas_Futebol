@@ -2,7 +2,7 @@ package com.neocamp.soccer_matches.repository;
 
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.testUtils.StateTestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +33,9 @@ public class ClubRepositoryTest {
     public void setup() {
         pageable = PageRequest.of(0, 10);
 
-        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCode.RS);
-        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCode.RJ);
-        sp = StateTestUtils.getStateOrFail(stateRepository, StateCode.SP);
+        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
+        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
+        sp = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.SP);
 
         ClubEntity gremio = new ClubEntity("Grêmio", rs,
                 LocalDate.of(1945, 7, 23), true);

@@ -7,7 +7,7 @@ import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.repository.ClubRepository;
 import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.repository.StadiumRepository;
@@ -58,9 +58,9 @@ public class MatchControllerIntegrationTest {
 
     @BeforeEach
     public void setup() {
-        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCode.RS);
-        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCode.RJ);
-        StateEntity sp = StateTestUtils.getStateOrFail(stateRepository, StateCode.SP);
+        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
+        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
+        StateEntity sp = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.SP);
 
         gremio = new ClubEntity("Grêmio", rs,
                 LocalDate.of(1950, 3, 24), true);

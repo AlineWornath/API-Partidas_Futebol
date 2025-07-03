@@ -6,7 +6,7 @@ import com.neocamp.soccer_matches.dto.club.ClubStatsResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.ClubMapper;
 import com.neocamp.soccer_matches.repository.ClubRepository;
@@ -106,7 +106,7 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByHomeState() {
-        Mockito.when(stateService.findByCode(StateCode.RS)).thenReturn(rs);
+        Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(gremioEntity), pageable, 1);
 
@@ -140,7 +140,7 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByHomeStateAndActive() {
-        Mockito.when(stateService.findByCode(StateCode.RS)).thenReturn(rs);
+        Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
 
         gremioEntity.setActive(true);
 
@@ -159,7 +159,7 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByNameAndHomeStateAndActive() {
-        Mockito.when(stateService.findByCode(StateCode.RJ)).thenReturn(rj);
+        Mockito.when(stateService.findByCode(StateCodeEnum.RJ)).thenReturn(rj);
 
         flamengoEntity.setActive(true);
 
@@ -282,7 +282,7 @@ public class ClubServiceTest {
         gremioEntity.setId(12L);
         gremioResponseDto.setId(12L);
 
-        Mockito.when(stateService.findByCode(StateCode.RS)).thenReturn(rs);
+        Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
         Mockito.when(clubMapper.toEntity(gremioRequestDto, rs)).thenReturn(gremioEntity);
         Mockito.when(clubRepository.save(gremioEntity)).thenReturn(gremioEntity);
         Mockito.when(clubMapper.toDto(gremioEntity)).thenReturn(gremioResponseDto);
@@ -324,7 +324,7 @@ public class ClubServiceTest {
         updatedResponse.setId(existingClubId);
 
         Mockito.when(clubRepository.findById(existingClubId)).thenReturn(Optional.of(existingClub));
-        Mockito.when(stateService.findByCode(StateCode.RJ)).thenReturn(rj);
+        Mockito.when(stateService.findByCode(StateCodeEnum.RJ)).thenReturn(rj);
         Mockito.when(clubRepository.save(existingClub)).thenReturn(existingClub);
         Mockito.when(clubMapper.toDto(existingClub)).thenReturn(updatedResponse);
 

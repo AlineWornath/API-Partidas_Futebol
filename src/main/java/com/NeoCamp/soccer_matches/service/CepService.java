@@ -1,6 +1,6 @@
 package com.neocamp.soccer_matches.service;
 
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.integration.ViaCepClient;
 import com.neocamp.soccer_matches.integration.ViaCepResponse;
@@ -25,6 +25,6 @@ public class CepService {
                 response.getLogradouro(),
                 response.getBairro(),
                 response.getLocalidade(),
-                StateCode.valueOf(response.getUf().toUpperCase()));
+                StateCodeEnum.valueOf(response.getUf().toUpperCase()));
     }
 }

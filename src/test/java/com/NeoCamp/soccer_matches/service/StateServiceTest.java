@@ -1,7 +1,7 @@
 package com.neocamp.soccer_matches.service;
 
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.repository.StateRepository;
 import com.neocamp.soccer_matches.testUtils.StateMockUtils;
@@ -27,7 +27,7 @@ public class StateServiceTest {
     @Test
     public void shouldFindStateByCodeSuccessfully() {
         StateEntity saoPaulo = StateMockUtils.sp();
-        StateCode code = StateCode.SP;
+        StateCodeEnum code = StateCodeEnum.SP;
 
         Mockito.when(stateRepository.findByCode(code)).thenReturn(Optional.of(saoPaulo));
 
@@ -39,7 +39,7 @@ public class StateServiceTest {
 
     @Test
     public void shouldThrowException_whenInvalidStateCode() {
-        StateCode code = StateCode.SP;
+        StateCodeEnum code = StateCodeEnum.SP;
 
         Mockito.when(stateRepository.findByCode(code)).thenReturn(Optional.empty());
 
