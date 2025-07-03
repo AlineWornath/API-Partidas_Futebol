@@ -1,5 +1,6 @@
 package com.neocamp.soccer_matches.entity;
 
+import com.neocamp.soccer_matches.valueobject.Address;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +17,9 @@ public class StadiumEntity {
     private Long id;
 
     private String name;
+
+    @Embedded
+    private Address address;
 
     public StadiumEntity(String name) {
         this.name = name;
