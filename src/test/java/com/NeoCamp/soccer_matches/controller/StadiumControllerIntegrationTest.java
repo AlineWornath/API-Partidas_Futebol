@@ -77,6 +77,19 @@ public class StadiumControllerIntegrationTest {
     }
 
     @Test
+    public void shouldCreateStadiumWithAddressFromViaCep() throws Exception {
+        StadiumRequestDto requestDto = new StadiumRequestDto("Morumbi", "05676120");
+
+        mockMvc.perform(post("/stadiums")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Morumbi"))
+                .andExpect(jsonPath("$.address.cep").value("05676-120"))
+                .andExpect(jsonPath("$.address.city").value("São Paulo"));
+    }
+
+    @Test
     public void shouldReturn400_whenCreateWithMissingParameter() throws Exception {
         StadiumRequestDto invalidDto = new StadiumRequestDto(null, null);
 
