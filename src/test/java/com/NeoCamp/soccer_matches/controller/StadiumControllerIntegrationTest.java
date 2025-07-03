@@ -67,7 +67,7 @@ public class StadiumControllerIntegrationTest {
 
     @Test
     public void shouldCreateStadium() throws Exception {
-        StadiumRequestDto requestDto = new StadiumRequestDto("Morumbi");
+        StadiumRequestDto requestDto = new StadiumRequestDto("Morumbi", null);
 
         mockMvc.perform(post("/stadiums")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -78,7 +78,7 @@ public class StadiumControllerIntegrationTest {
 
     @Test
     public void shouldReturn400_whenCreateWithMissingParameter() throws Exception {
-        StadiumRequestDto invalidDto = new StadiumRequestDto(null);
+        StadiumRequestDto invalidDto = new StadiumRequestDto(null, null);
 
         mockMvc.perform(post("/stadiums")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -91,7 +91,7 @@ public class StadiumControllerIntegrationTest {
         StadiumEntity beiraRio = new StadiumEntity("Beira-Rio");
         stadiumRepository.save(beiraRio);
 
-        StadiumRequestDto updateRequest = new StadiumRequestDto("Maracanã");
+        StadiumRequestDto updateRequest = new StadiumRequestDto("Maracanã", null);
 
         mockMvc.perform(put("/stadiums/{id}", beiraRio.getId())
                 .contentType(MediaType.APPLICATION_JSON)
