@@ -5,6 +5,7 @@ import com.neocamp.soccer_matches.dto.stadium.StadiumResponseDto;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface StadiumMapper {
@@ -14,4 +15,6 @@ public interface StadiumMapper {
     StadiumEntity toEntity(StadiumRequestDto dto);
 
     StadiumResponseDto toDto(StadiumEntity stadium);
+
+    void updateEntityFromDto(StadiumRequestDto dto, @MappingTarget StadiumEntity entity);
 }

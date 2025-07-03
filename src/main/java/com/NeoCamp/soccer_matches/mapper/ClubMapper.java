@@ -6,6 +6,7 @@ import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring", uses = StateMapper.class)
 public interface ClubMapper {
@@ -16,4 +17,6 @@ public interface ClubMapper {
     ClubEntity toEntity(ClubRequestDto dto, StateEntity state);
 
     ClubResponseDto toDto(ClubEntity club);
+
+    void updateEntityFromDto(ClubRequestDto dto, @MappingTarget ClubEntity entity);
 }

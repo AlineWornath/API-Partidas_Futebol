@@ -5,7 +5,7 @@ import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
-import com.neocamp.soccer_matches.enums.MatchFilter;
+import com.neocamp.soccer_matches.enums.MatchFilterEnum;
 import com.neocamp.soccer_matches.mapper.MatchMapper;
 import com.neocamp.soccer_matches.repository.MatchRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,7 +22,7 @@ public class MatchService {
     private final StadiumService stadiumService;
     private final MatchMapper matchMapper;
 
-    public Page<MatchResponseDto> listMatchesByFilters(Long clubId, Long stadiumId, MatchFilter filter,
+    public Page<MatchResponseDto> listMatchesByFilters(Long clubId, Long stadiumId, MatchFilterEnum filter,
                                                        Pageable pageable) {
         Boolean isRout = null;
         Boolean isHome = null;
@@ -74,12 +74,7 @@ public class MatchService {
         ClubEntity awayClub = clubService.findEntityById(matchRequestDto.getAwayClubId());
         StadiumEntity stadium = stadiumService.findEntityById(matchRequestDto.getStadiumId());
 
-        match.setHomeClub(homeClub);
-        match.setAwayClub(awayClub);
-        match.setHomeGoals(matchRequestDto.getHomeGoals());
-        match.setAwayGoals(matchRequestDto.getAwayGoals());
-        match.setStadium(stadium);
-        match.setMatchDatetime(matchRequestDto.getMatchDatetime());
+        matchMapper.updateEntityFromDto(matchRequestDto, match);
 
         MatchEntity updatedMatch = matchRepository.save(match);
         return matchMapper.toDto(updatedMatch);
