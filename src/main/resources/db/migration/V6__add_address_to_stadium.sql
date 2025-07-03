@@ -1,0 +1,6 @@
+ALTER TABLE stadium
+    ADD COLUMN cep VARCHAR(20),
+    ADD COLUMN street VARCHAR(100),
+    ADD COLUMN neighborhood VARCHAR(100),
+    ADD COLUMN city VARCHAR(100),
+    ADD COLUMN state_code VARCHAR(20);

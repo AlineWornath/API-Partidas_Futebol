@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface StadiumMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "address", ignore = true)
     StadiumEntity toEntity(StadiumRequestDto dto);
 
     StadiumResponseDto toDto(StadiumEntity stadium);
