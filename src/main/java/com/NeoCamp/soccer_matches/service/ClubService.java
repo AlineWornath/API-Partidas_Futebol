@@ -2,44 +2,35 @@ package com.neocamp.soccer_matches.service;
 
 import com.neocamp.soccer_matches.dto.club.*;
 import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
-import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
-import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
 import com.neocamp.soccer_matches.enums.RankingOrderEnum;
 import com.neocamp.soccer_matches.enums.MatchFilterEnum;
 import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.ClubMapper;
-import com.neocamp.soccer_matches.mapper.MatchMapper;
 import com.neocamp.soccer_matches.repository.ClubRepository;
-import com.neocamp.soccer_matches.repository.MatchRepository;
+import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ClubService {
     private final ClubRepository clubRepository;
-    private final StateService stateService;
     private final ClubMapper clubMapper;
-    private final MatchMapper matchMapper;
-    private final MatchRepository matchRepository;
+    private final StateService stateService;
+    private final MatchService matchService;
+    private final ExistenceValidator existenceValidator;
 
-    public Page<ClubResponseDto> listClubsByFilters(String name, String stateCode, Boolean active, Pageable pageable) {
-        StateEntity homeState = null;
-        if (stateCode != null) {
-            homeState = stateService.findByCode(StateCodeEnum.valueOf(stateCode.toUpperCase()));
-        }
-
-        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(name, homeState, active, pageable);
+    public Page<ClubResponseDto> listClubsByFilters(String name, StateCodeEnum stateCode, Boolean active,
+                                                    Pageable pageable) {
+        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(name, stateCode, active, pageable);
         return clubs.map(clubMapper::toDto);
     }
 
@@ -55,76 +46,39 @@ public class ClubService {
     }
 
     public ClubStatsResponseDto getClubStats(Long id, MatchFilterEnum filter) {
-        findEntityById(id);
+        existenceValidator.validateClubExists(id);
 
-        Boolean isHome = null;
-        Boolean isAway = null;
-
-        if (filter != null) {
-            switch (filter) {
-                case HOME ->  isHome = true;
-                case AWAY -> isAway = true;
-                case ROUT -> throw new BusinessException("Filter rout is not supported for this endpoint");
+        if (MatchFilterEnum.ROUT.equals(filter)) {
+            throw new BusinessException("Filter rout is not supported for this endpoint");
             }
-        }
-        return matchRepository.getClubStats(id, isHome, isAway);
+        return matchService.getClubStats(id, filter);
     }
 
     public List<ClubVersusClubStatsDto> getClubVersusOpponentsStats(Long id, MatchFilterEnum filter) {
-        findEntityById(id);
+        existenceValidator.validateClubExists(id);
 
-        Boolean isHome = null;
-        Boolean isAway = null;
-
-        if (filter != null) {
-            switch (filter) {
-                case HOME ->  isHome = true;
-                case AWAY ->  isAway = true;
-                case ROUT ->  throw new BusinessException("Filter rout is not supported for this endpoint");
-            }
+        if (MatchFilterEnum.ROUT.equals(filter)) {
+            throw new BusinessException("Filter rout is not supported for this endpoint");
         }
-        return matchRepository.getClubVersusOpponentsStats(id, isHome, isAway);
+        return matchService.getClubVersusOpponentsStats(id, filter);
     }
 
     public HeadToHeadResponseDto getHeadToHeadStats(Long clubId, Long opponentId, MatchFilterEnum filter) {
-        findEntityById(clubId);
-        findEntityById(opponentId);
+        existenceValidator.validateClubExists(clubId);
+        existenceValidator.validateClubExists(opponentId);
 
-        Boolean isRout = null;
-        Boolean isHome = null;
-        Boolean isAway = null;
-
-        if (filter != null) {
-            switch (filter) {
-                case ROUT ->  isRout = true;
-                case HOME ->  isHome = true;
-                case AWAY ->  isAway = true;
-            }
+        if (clubId.equals(opponentId)) {
+            throw new BusinessException("Head-to-head comparison requires two different clubs");
         }
-
-        ClubVersusClubStatsDto stats = matchRepository.getHeadToHeadStats(clubId, opponentId, isRout,
-                isHome, isAway);
-        List<MatchEntity> matchEntities = matchRepository.getHeadToHeadMatches(clubId, opponentId, isRout,
-                isHome, isAway);
-        List<MatchResponseDto> matches = matchEntities.stream().map(matchMapper::toDto).collect(Collectors.toList());
-
-        return new HeadToHeadResponseDto(stats, matches);
+        return matchService.getHeadToHeadStats(clubId, opponentId, filter);
     }
 
-    public List<ClubRankingDto> getClubRanking(RankingOrderEnum rankingOrderEnum) {
-        List<ClubRankingDto> ranking = new ArrayList<>();
-
-        switch (rankingOrderEnum) {
-            case MATCHES -> ranking = matchRepository.getClubRankingByTotalMatches();
-            case WINS -> ranking = matchRepository.getClubRankingByTotalWins();
-            case GOALS -> ranking = matchRepository.getClubRankingByTotalGoals();
-            case POINTS -> ranking = matchRepository.getClubRankingByTotalPoints();
-        }
-        return ranking;
+    public List<ClubRankingDto> getClubRanking(RankingOrderEnum rankingOrder) {
+        return matchService.getClubRanking(rankingOrder);
     }
 
     public ClubResponseDto save(ClubRequestDto clubRequestDto) {
-        validateStateCode(clubRequestDto.getStateCode());
+        existenceValidator.validateStateCode(clubRequestDto.getStateCode());
 
         StateEntity homeState = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
         ClubEntity club = clubMapper.toEntity(clubRequestDto, homeState);
@@ -136,7 +90,7 @@ public class ClubService {
     public ClubResponseDto update(Long id, ClubRequestDto clubRequestDto) {
         ClubEntity club = findEntityById(id);
 
-        validateStateCode(clubRequestDto.getStateCode());
+        existenceValidator.validateStateCode(clubRequestDto.getStateCode());
         StateEntity state = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
         club.setHomeState(state);
 
@@ -150,13 +104,5 @@ public class ClubService {
         ClubEntity club = findEntityById(id);
         club.setActive(false);
         clubRepository.save(club);
-    }
-
-    private void validateStateCode(String code) {
-        try {
-            StateCodeEnum.valueOf(code.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("Invalid state code: " + code);
-        }
     }
 }

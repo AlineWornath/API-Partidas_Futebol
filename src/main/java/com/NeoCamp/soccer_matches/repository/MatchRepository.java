@@ -19,69 +19,70 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
         SELECT m FROM MatchEntity m
         WHERE (:clubId IS NULL OR m.homeClub.id = :clubId OR m.awayClub.id = :clubId)
         AND (:stadiumId IS NULL OR m.stadium.id = :stadiumId)
-        AND (:isRout IS NULL OR (ABS(m.homeGoals - m.awayGoals) >= 3))
-        AND (:isHome IS NULL OR (m.homeClub.id = :clubId AND :isHome = TRUE))
-        AND (:isAway IS NULL OR (m.awayClub.id = :clubId AND :isAway = TRUE))
+        AND (:matchFilter IS NULL
+            OR (:matchFilter = 'ROUT' AND ABS(m.homeGoals - m.awayGoals) >= 3)
+            OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
+            OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId))
         """)
     Page<MatchEntity> listMatchesByFilters(
             @Param("clubId") Long clubId,
             @Param("stadiumId")Long stadiumId,
-            @Param("rout") Boolean  isRout,
-            @Param("isHome") Boolean isHome,
-            @Param("isAway") Boolean isAway,
+            @Param("matchFilter") String matchFilter,
             Pageable pageable
             );
 
     @Query("""
         SELECT new com.neocamp.soccer_matches.dto.club.ClubStatsResponseDto(
-            :id,
-            (SELECT c.name FROM ClubEntity c WHERE c.id = :id),
-            COUNT(CASE WHEN (m.homeClub.id = :id AND m.homeGoals > m.awayGoals)
-                   OR (m.awayClub.id = :id AND m.awayGoals > m.homeGoals) THEN 1 END),
+            :clubId,
+            (SELECT c.name FROM ClubEntity c WHERE c.id = :clubId),
+            COUNT(CASE WHEN (m.homeClub.id = :clubId AND m.homeGoals > m.awayGoals)
+                   OR (m.awayClub.id = :clubId AND m.awayGoals > m.homeGoals) THEN 1 END),
             COUNT(CASE WHEN m.homeGoals = m.awayGoals THEN 1 END),
-            COUNT(CASE WHEN (m.homeClub.id = :id AND m.homeGoals < m.awayGoals)
-                   OR (m.awayClub.id = :id AND m.awayGoals < m.homeGoals) THEN 1 END),
-            SUM(CASE WHEN m.homeClub.id = :id THEN m.homeGoals
-                     WHEN m.awayClub.id = :id THEN m.awayGoals ELSE 0 END),
-            SUM(CASE WHEN m.homeClub.id = :id THEN m.awayGoals
-                     WHEN m.awayClub.id = :id THEN m.homeGoals ELSE 0 END)
+            COUNT(CASE WHEN (m.homeClub.id = :clubId AND m.homeGoals < m.awayGoals)
+                   OR (m.awayClub.id = :clubId AND m.awayGoals < m.homeGoals) THEN 1 END),
+            SUM(CASE WHEN m.homeClub.id = :clubId THEN m.homeGoals
+                     WHEN m.awayClub.id = :clubId THEN m.awayGoals ELSE 0 END),
+            SUM(CASE WHEN m.homeClub.id = :clubId THEN m.awayGoals
+                     WHEN m.awayClub.id = :clubId THEN m.homeGoals ELSE 0 END)
         )
         FROM MatchEntity m
-        WHERE (m.homeClub.id = :id OR m.awayClub.id = :id)
-        AND (:isHome IS NULL OR (m.homeClub.id = :id AND :isHome = TRUE))
-        AND (:isAway IS NULL OR (m.awayClub.id = :id AND :isAway = TRUE))
+        WHERE (m.homeClub.id = :clubId OR m.awayClub.id = :clubId)
+        AND (:matchFilter IS NULL
+            OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
+            OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId)
+            OR (:matchFilter = 'ROUT'))
     """)
     ClubStatsResponseDto getClubStats(
-            @Param("id") Long id,
-            @Param("isHome") Boolean isHome,
-            @Param("isAway") Boolean isAway);
+            @Param("clubId") Long clubId,
+            @Param("matchFilter") String matchFilter);
 
     @Query("""
         SELECT new com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto(
-            :id,
-            (SELECT c.name FROM ClubEntity c WHERE c.id = :id),
-            CASE WHEN m.homeClub.id = :id THEN m.awayClub.id ELSE m.homeClub.id END,
-            CASE WHEN m.homeClub.id = :id THEN m.awayClub.name ELSE m.homeClub.name END,
-            COUNT(CASE WHEN (m.homeClub.id = :id AND m.homeGoals > m.awayGoals)
-                OR (m.awayClub.id = :id AND m.awayGoals > m.homeGoals) THEN 1 END),
+            :clubId,
+            (SELECT c.name FROM ClubEntity c WHERE c.id = :clubId),
+            CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.id ELSE m.homeClub.id END,
+            CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.name ELSE m.homeClub.name END,
+            COUNT(CASE WHEN (m.homeClub.id = :clubId AND m.homeGoals > m.awayGoals)
+                OR (m.awayClub.id = :clubId AND m.awayGoals > m.homeGoals) THEN 1 END),
             COUNT(CASE WHEN m.homeGoals = m.awayGoals THEN 1 END),
-            COUNT(CASE WHEN (m.homeClub.id = :id AND m.homeGoals < m.awayGoals)
-                OR (m.awayClub.id = :id AND m.awayGoals < m.homeGoals) THEN 1 END),
-            SUM(CASE WHEN m.homeClub.id = :id THEN m.homeGoals ELSE m.awayGoals END),
-            SUM(CASE WHEN m.homeClub.id = :id THEN m.awayGoals ELSE m.homeGoals END)
+            COUNT(CASE WHEN (m.homeClub.id = :clubId AND m.homeGoals < m.awayGoals)
+                OR (m.awayClub.id = :clubId AND m.awayGoals < m.homeGoals) THEN 1 END),
+            SUM(CASE WHEN m.homeClub.id = :clubId THEN m.homeGoals ELSE m.awayGoals END),
+            SUM(CASE WHEN m.homeClub.id = :clubId THEN m.awayGoals ELSE m.homeGoals END)
        )
        FROM MatchEntity m
-       WHERE (m.homeClub.id = :id OR m.awayClub.id = :id)
-       AND (:isHome IS NULL OR (m.homeClub.id = :id AND :isHome = TRUE))
-       AND (:isAway IS NULL OR (m.awayClub.id = :id AND :isAway = TRUE))
+       WHERE (m.homeClub.id = :clubId OR m.awayClub.id = :clubId)
+       AND (:matchFilter IS NULL
+            OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
+            OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId)
+            OR (:matchFilter = 'ROUT'))
        GROUP BY
-            CASE WHEN m.homeClub.id = :id THEN m.awayClub.id ELSE m.homeClub.id END,
-            CASE WHEN m.homeClub.id = :id THEN m.awayClub.name ELSE m.homeClub.name END
+            CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.id ELSE m.homeClub.id END,
+            CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.name ELSE m.homeClub.name END
 """)
     List<ClubVersusClubStatsDto> getClubVersusOpponentsStats(
-            @Param("id") Long id,
-            @Param("isHome") Boolean isHome,
-            @Param("isAway") Boolean isAway);
+            @Param("clubId") Long clubId,
+            @Param("matchFilter") String matchFilter);
 
     @Query("""
        SELECT new com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto(
@@ -100,31 +101,29 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
        FROM MatchEntity m
        WHERE ((m.homeClub.id = :clubId AND m.awayClub.id = :opponentId)
           OR (m.awayClub.id = :clubId AND m.homeClub.id = :opponentId))
-       AND (:rout IS NULL OR (ABS(m.homeGoals - m.awayGoals) >= 3))
-       AND (:filterAsHome IS NULL OR (m.homeClub.id = :clubId AND :filterAsHome = TRUE))
-       AND (:filterAsAway IS NULL OR (m.awayClub.id = :clubId AND :filterAsAway = TRUE))
+       AND (:matchFilter IS NULL
+            OR (:matchFilter = 'ROUT' AND ABS(m.homeGoals - m.awayGoals) >= 3)
+            OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
+            OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId))
 """)
     ClubVersusClubStatsDto getHeadToHeadStats(
             @Param("clubId") Long clubId,
             @Param("opponentId") Long opponentId,
-            @Param("rout") Boolean rout,
-            @Param("filterAsHome") Boolean filterAsHome,
-            @Param("filterAsAway") Boolean filterAsAway);
+            @Param("matchFilter") String matchFilter);
 
     @Query("""
        SELECT m FROM MatchEntity m
        WHERE ((m.homeClub.id = :clubId AND m.awayClub.id = :opponentId)
           OR (m.awayClub.id = :clubId AND m.homeClub.id = :opponentId))
-       AND (:rout IS NULL OR (ABS(m.homeGoals - m.awayGoals) >= 3))
-       AND (:isHome IS NULL OR (m.homeClub.id = :clubId AND :isHome = TRUE))
-       AND (:isAway IS NULL OR (m.awayClub.id = :clubId AND :isAway = TRUE))
+       AND (:matchFilter IS NULL
+            OR (:matchFilter = 'ROUT' AND ABS(m.homeGoals - m.awayGoals) >= 3)
+            OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
+            OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId))
 """)
     List<MatchEntity> getHeadToHeadMatches(
             @Param("clubId") Long clubId,
             @Param("opponentId")  Long opponentId,
-            @Param("isRout") Boolean isRout,
-            @Param("isHome") Boolean isHome,
-            @Param("isAway") Boolean isAway);
+            @Param("matchFilter") String matchFilter);
 
     @Query("""
         SELECT new com.neocamp.soccer_matches.dto.club.ClubRankingDto(

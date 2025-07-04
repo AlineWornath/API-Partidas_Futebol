@@ -4,6 +4,7 @@ import com.neocamp.soccer_matches.dto.club.*;
 import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
 import com.neocamp.soccer_matches.enums.RankingOrderEnum;
 import com.neocamp.soccer_matches.enums.MatchFilterEnum;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.service.ClubService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class ClubController {
     @GetMapping
     public ResponseEntity<Page<ClubResponseDto>> listClubsByFilters(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String stateCode,
+            @RequestParam(required = false) StateCodeEnum stateCode,
             @RequestParam(required = false) Boolean active,
             Pageable pageable) {
         Page<ClubResponseDto> clubs = clubService.listClubsByFilters(name, stateCode, active, pageable);

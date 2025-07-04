@@ -18,5 +18,7 @@ public interface ClubMapper {
 
     ClubResponseDto toDto(ClubEntity club);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "homeState", ignore = true)
     void updateEntityFromDto(ClubRequestDto dto, @MappingTarget ClubEntity entity);
 }

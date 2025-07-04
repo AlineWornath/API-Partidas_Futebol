@@ -134,6 +134,7 @@ public class StadiumServiceTest {
     @Test
     public void shouldUpdateStadiumSuccessfully() {
         Long existingStadiumId = 8L;
+        String updatedName = "New Name";
         StadiumEntity existingStadium = StadiumMockUtils.custom("Old Name");
         existingStadium.setId(existingStadiumId);
 

@@ -13,6 +13,7 @@ import com.neocamp.soccer_matches.repository.ClubRepository;
 import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.StateMockUtils;
+import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,15 +39,16 @@ public class ClubServiceTest {
 
     @Mock
     private ClubRepository clubRepository;
-
     @Mock
     private StateService stateService;
-
     @Mock
     private ClubMapper clubMapper;
-
     @Mock
     private MatchRepository matchRepository;
+    @Mock
+    private ExistenceValidator existenceValidator;
+    @Mock
+    private MatchService matchService;
 
     @InjectMocks
     private ClubService clubService;
@@ -57,6 +61,9 @@ public class ClubServiceTest {
 
     @BeforeEach
     public void setUp() {
+        existenceValidator = Mockito.mock(ExistenceValidator.class);
+        matchService = Mockito.mock(MatchService.class);
+
         pageable = PageRequest.of(0, 10);
 
         gremioEntity = ClubMockUtils.gremio();
@@ -110,11 +117,11 @@ public class ClubServiceTest {
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(gremioEntity), pageable, 1);
 
-        Mockito.when(clubRepository.listClubsByFilters(null, rs,  null, pageable ))
+        Mockito.when(clubRepository.listClubsByFilters(null, StateCodeEnum.RS,  null, pageable ))
                 .thenReturn(clubs);
         Mockito.when(clubMapper.toDto(gremioEntity)).thenReturn(gremioResponseDto);
 
-        Page<ClubResponseDto> result = clubService.listClubsByFilters(null, "RS", null, pageable);
+        Page<ClubResponseDto> result = clubService.listClubsByFilters(null, StateCodeEnum.RS, null, pageable);
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Grêmio", result.getContent().getFirst().getName());
@@ -146,11 +153,11 @@ public class ClubServiceTest {
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(gremioEntity), pageable, 1);
 
-        Mockito.when(clubRepository.listClubsByFilters(null, rs, true, pageable))
+        Mockito.when(clubRepository.listClubsByFilters(null, StateCodeEnum.RS, true, pageable))
                 .thenReturn(clubs);
         Mockito.when(clubMapper.toDto(gremioEntity)).thenReturn(gremioResponseDto);
 
-        Page<ClubResponseDto> result = clubService.listClubsByFilters(null, "RS", true, pageable);
+        Page<ClubResponseDto> result = clubService.listClubsByFilters(null, StateCodeEnum.RS, true, pageable);
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Grêmio", result.getContent().getFirst().getName());
@@ -165,11 +172,11 @@ public class ClubServiceTest {
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(flamengoEntity), pageable, 1);
 
-        Mockito.when(clubRepository.listClubsByFilters("Flamengo", rj, true, pageable))
+        Mockito.when(clubRepository.listClubsByFilters("Flamengo", StateCodeEnum.RJ, true, pageable))
                 .thenReturn(clubs);
         Mockito.when(clubMapper.toDto(flamengoEntity)).thenReturn(flamengoResponseDto);
 
-        Page<ClubResponseDto> result = clubService.listClubsByFilters("Flamengo", "RJ",
+        Page<ClubResponseDto> result = clubService.listClubsByFilters("Flamengo", StateCodeEnum.RJ,
                 true, pageable);
 
         Assertions.assertEquals(1, result.getTotalElements());
@@ -247,7 +254,7 @@ public class ClubServiceTest {
         ClubEntity gremio = ClubMockUtils.gremio();
 
         Mockito.when(clubRepository.findById(clubId)).thenReturn(Optional.of(gremio));
-        Mockito.when(matchRepository.getClubStats(clubId, null, null)).thenReturn(mockStats);
+        Mockito.when(matchRepository.getClubStats(clubId, null)).thenReturn(mockStats);
 
         ClubStatsResponseDto result = clubService.getClubStats(clubId, null);
 
@@ -267,7 +274,7 @@ public class ClubServiceTest {
 
         ClubEntity gremio = ClubMockUtils.gremio();
         Mockito.when(clubRepository.findById(id)).thenReturn(Optional.of(gremio));
-        Mockito.when(matchRepository.getClubVersusOpponentsStats(id, null, null)).thenReturn(statsList);
+        Mockito.when(matchRepository.getClubVersusOpponentsStats(id, null)).thenReturn(statsList);
 
         List<ClubVersusClubStatsDto> result = clubService.getClubVersusOpponentsStats(id, null);
 
@@ -301,10 +308,9 @@ public class ClubServiceTest {
         ClubRequestDto clubDto = ClubMockUtils.customRequest("club2",invalidStateCode,
                 LocalDate.of(2020, 3, 15), true);
 
-        BusinessException exception = Assertions.assertThrows(BusinessException.class,
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
                 () -> clubService.save(clubDto));
 
-        Assertions.assertEquals("Invalid state code: XXX", exception.getMessage());
         Mockito.verify(clubRepository, Mockito.never()).save(Mockito.any());
     }
 

@@ -16,5 +16,7 @@ public interface StadiumMapper {
 
     StadiumResponseDto toDto(StadiumEntity stadium);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "address", ignore = true)
     void updateEntityFromDto(StadiumRequestDto dto, @MappingTarget StadiumEntity entity);
 }

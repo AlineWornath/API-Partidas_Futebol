@@ -17,5 +17,9 @@ public interface MatchMapper {
 
     MatchResponseDto toDto(MatchEntity match);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "homeClub", ignore = true)
+    @Mapping(target = "awayClub", ignore = true)
+    @Mapping(target = "stadium", ignore = true)
     void updateEntityFromDto(MatchRequestDto dto, @MappingTarget MatchEntity entity);
 }

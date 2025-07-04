@@ -60,12 +60,13 @@ public class ClubRepositoryTest {
 
     @Test
     public void shouldFilterClubsByHomeState() {
-        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(null, sp, null, pageable);
+        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(null, sp.getCode(), null, pageable);
 
         Assertions.assertFalse(clubs.isEmpty());
         Assertions.assertEquals(2, clubs.getTotalElements());
         Assertions.assertTrue(clubs.stream().allMatch(club -> club.getHomeState().equals(sp)));
     }
+
     @Test
     public void shouldFilterClubsByActive() {
         Page<ClubEntity> clubs = clubRepository.listClubsByFilters(null, null, false, pageable);
@@ -76,7 +77,7 @@ public class ClubRepositoryTest {
 
     @Test
     public void shouldFilterClubsByNameAndHomeState() {
-        Page<ClubEntity> clubs = clubRepository.listClubsByFilters("i", sp, null, pageable);
+        Page<ClubEntity> clubs = clubRepository.listClubsByFilters("i", sp.getCode(), null, pageable);
 
         Assertions.assertFalse(clubs.isEmpty());
         Assertions.assertEquals(2, clubs.getTotalElements());
@@ -96,7 +97,7 @@ public class ClubRepositoryTest {
 
     @Test
     public void shouldFilterClubsByHomeStateAndActive() {
-        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(null, sp, false, pageable);
+        Page<ClubEntity> clubs = clubRepository.listClubsByFilters(null, sp.getCode(), false, pageable);
 
         Assertions.assertFalse(clubs.isEmpty());
         Assertions.assertEquals(1, clubs.getTotalElements());
@@ -106,7 +107,7 @@ public class ClubRepositoryTest {
 
     @Test
     public void shouldFilterClubsByNameAndHomeStateAndActive() {
-        Page<ClubEntity> clubs = clubRepository.listClubsByFilters("in", sp, true, pageable);
+        Page<ClubEntity> clubs = clubRepository.listClubsByFilters("in", sp.getCode(), true, pageable);
 
         Assertions.assertFalse(clubs.isEmpty());
         Assertions.assertEquals(1, clubs.getTotalElements());
