@@ -168,7 +168,7 @@ public class MatchServiceTest {
 
         Mockito.when(clubService.findEntityById(clubId)).thenReturn(null);
         Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(null);
-        Mockito.when(matchRepository.listMatchesByFilters(null, null, null, null,
+        Mockito.when(matchRepository.listMatchesByFilters(clubId, stadiumId, null, null,
                 null, pageable)).thenReturn(emptyPage);
 
         Page<MatchResponseDto> result = matchService.listMatchesByFilters(clubId, stadiumId, null, pageable);
