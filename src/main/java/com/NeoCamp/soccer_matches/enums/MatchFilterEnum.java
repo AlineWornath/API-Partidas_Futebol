@@ -1,5 +1,5 @@
 package com.neocamp.soccer_matches.enums;
 
-public enum MatchFilter {
+public enum MatchFilterEnum {
     ROUT, HOME, AWAY
 }

@@ -48,7 +48,8 @@ public class StadiumService {
     public StadiumResponseDto update(Long id, StadiumRequestDto stadiumRequestDto) {
         StadiumEntity stadium = findEntityById(id);
 
-        stadium.setName(stadiumRequestDto.getName());
+        stadiumMapper.updateEntityFromDto(stadiumRequestDto, stadium);
+
         setAddressByCep(stadium, stadiumRequestDto.getCep());
 
         StadiumEntity savedStadium = stadiumRepository.save(stadium);

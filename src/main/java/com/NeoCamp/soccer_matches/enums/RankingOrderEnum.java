@@ -1,5 +1,5 @@
 package com.neocamp.soccer_matches.enums;
 
-public enum RankingOrder {
+public enum RankingOrderEnum {
     MATCHES, WINS, GOALS, POINTS
 }

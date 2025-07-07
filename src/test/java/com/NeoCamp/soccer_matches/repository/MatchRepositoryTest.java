@@ -6,7 +6,7 @@ import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.testUtils.StateTestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,9 +45,9 @@ public class MatchRepositoryTest {
     public void setup() {
         pageable = PageRequest.of(0, 10);
 
-        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCode.RS);
-        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCode.RJ);
-        StateEntity sp = StateTestUtils.getStateOrFail(stateRepository, StateCode.SP);
+        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
+        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
+        StateEntity sp = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.SP);
 
         gremio = new ClubEntity("Grêmio", rs,
                 LocalDate.of(1945, 7, 23), true);
@@ -78,8 +78,8 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldFilterMatchesByClub(){
-        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremioId, null, null,
-                null, null, pageable);
+        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremioId, null,
+                null, pageable);
 
         Assertions.assertNotNull(matches);
         Assertions.assertEquals(2, matches.getTotalElements());
@@ -89,8 +89,8 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldFilterMatchesByStadium(){
-        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(null, maracanaId, null,
-                null, null, pageable);
+        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(null, maracanaId,
+                null, pageable);
 
         Assertions.assertNotNull(matches);
         Assertions.assertEquals(1, matches.getTotalElements());
@@ -99,8 +99,7 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldFilterMatchesByClubAndStadium(){
-        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremioId, maracanaId, null,
-                null, null, pageable);
+        Page<MatchEntity> matches = matchRepository.listMatchesByFilters(gremioId, maracanaId,null, pageable);
 
         Assertions.assertNotNull(matches);
         Assertions.assertEquals(1, matches.getTotalElements());
@@ -110,7 +109,7 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldCalculateClubStats() {
-        ClubStatsResponseDto clubStats = matchRepository.getClubStats(gremioId, null, null);
+        ClubStatsResponseDto clubStats = matchRepository.getClubStats(gremioId, null);
 
         Assertions.assertEquals("Grêmio", clubStats.getClubName());
         Assertions.assertEquals(1, clubStats.getTotalWins());
@@ -121,7 +120,7 @@ public class MatchRepositoryTest {
 
     @Test
     public void shouldCalculateClubVersusOpponentsStats() {
-        List<ClubVersusClubStatsDto> statsList = matchRepository.getClubVersusOpponentsStats(gremioId, null, null);
+        List<ClubVersusClubStatsDto> statsList = matchRepository.getClubVersusOpponentsStats(gremioId, null);
 
         Assertions.assertEquals(2, statsList.size());
         assertThat(statsList).extracting(ClubVersusClubStatsDto::getOpponentName).contains("Corinthians", "Flamengo");

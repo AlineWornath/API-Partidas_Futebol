@@ -7,12 +7,12 @@ import com.neocamp.soccer_matches.mapper.StadiumMapper;
 import com.neocamp.soccer_matches.repository.StadiumRepository;
 import com.neocamp.soccer_matches.testUtils.StadiumMockUtils;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -24,40 +24,32 @@ import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
+@RequiredArgsConstructor
 public class StadiumServiceTest {
 
-    @Mock
-    private StadiumRepository stadiumRepository;
-
-    @Mock
-    private StadiumMapper stadiumMapper;
-
-    @InjectMocks
+    private final StadiumRepository stadiumRepository = Mockito.mock(StadiumRepository.class);
+    private final StadiumMapper stadiumMapper = Mappers.getMapper(StadiumMapper.class);
+    private final CepService cepService = Mockito.mock(CepService.class);
     private StadiumService stadiumService;
-
     private final Pageable pageable = PageRequest.of(0, 10);
     private StadiumEntity maracanaEntity, morumbiEntity;
     private StadiumRequestDto maracanaRequestDto, morumbiRequestDto;
-    private StadiumResponseDto maracanaResponseDto;
 
 
     @BeforeEach
     public void setUp() {
+        stadiumService = new StadiumService(stadiumRepository, stadiumMapper, cepService);
         maracanaEntity = StadiumMockUtils.maracana();
         morumbiEntity = StadiumMockUtils.morumbi();
 
         maracanaRequestDto = StadiumMockUtils.maracanaRequestDto();
         morumbiRequestDto = StadiumMockUtils.morumbiRequestDto();
-
-        maracanaResponseDto = StadiumMockUtils.maracanaResponseDto();
     }
     @Test
     public void shouldListAllStadiums() {
         Page<StadiumEntity> stadiums = new PageImpl<>(List.of(maracanaEntity, morumbiEntity), pageable, 2);
 
         Mockito.when(stadiumRepository.findAll(pageable)).thenReturn(stadiums);
-        Mockito.when(stadiumMapper.toDto(maracanaEntity)).thenReturn(StadiumMockUtils.maracanaResponseDto());
-        Mockito.when(stadiumMapper.toDto(morumbiEntity)).thenReturn(StadiumMockUtils.morumbiResponseDto());
 
         Page<StadiumResponseDto> result = stadiumService.findAll(pageable);
 
@@ -72,7 +64,6 @@ public class StadiumServiceTest {
         maracanaEntity.setId(id);
 
         Mockito.when(stadiumRepository.findById(id)).thenReturn(Optional.of(maracanaEntity));
-        Mockito.when(stadiumMapper.toDto(maracanaEntity)).thenReturn(maracanaResponseDto);
 
         StadiumResponseDto result = stadiumService.findById(id);
 
@@ -119,13 +110,11 @@ public class StadiumServiceTest {
 
     @Test
     public void shouldSaveStadiumSuccessfully() {
-        maracanaEntity.setId(2L);
-        maracanaResponseDto.setId(2L);
-
-        Mockito.when(stadiumMapper.toEntity(maracanaRequestDto)).thenReturn(maracanaEntity);
-        Mockito.when(stadiumRepository.save(maracanaEntity)).thenReturn(maracanaEntity);
-        Mockito.when(stadiumMapper.toDto(maracanaEntity)).thenReturn(maracanaResponseDto);
-
+        Mockito.when(stadiumRepository.save(Mockito.any())).thenAnswer(invocation -> {
+                   StadiumEntity entity = invocation.getArgument(0);
+                   entity.setId(2L);
+                   return entity;
+                });
         StadiumResponseDto result = stadiumService.save(maracanaRequestDto);
 
         Assertions.assertNotNull(result);
@@ -146,7 +135,6 @@ public class StadiumServiceTest {
 
         Mockito.when(stadiumRepository.findById(existingStadiumId)).thenReturn(Optional.of(existingStadium));
         Mockito.when(stadiumRepository.save(existingStadium)).thenReturn(existingStadium);
-        Mockito.when(stadiumMapper.toDto(existingStadium)).thenReturn(updatedResponse);
 
         StadiumResponseDto result = stadiumService.update(existingStadiumId, updateRequest);
 

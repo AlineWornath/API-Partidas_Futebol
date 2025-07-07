@@ -1,6 +1,6 @@
 package com.neocamp.soccer_matches.entity;
 
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,9 +19,9 @@ public class StateEntity {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    private StateCode code;
+    private StateCodeEnum code;
 
-    public StateEntity(String name, StateCode code) {
+    public StateEntity(String name, StateCodeEnum code) {
         this.name = name;
         this.code = code;
     }

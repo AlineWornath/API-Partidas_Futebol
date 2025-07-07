@@ -1,7 +1,7 @@
 package com.neocamp.soccer_matches.service;
 
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.repository.StateRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class StateService {
     private final StateRepository stateRepository;
 
-    public StateEntity findByCode(StateCode code) {
+    public StateEntity findByCode(StateCodeEnum code) {
         return stateRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException("Invalid state code: " + code));
     }

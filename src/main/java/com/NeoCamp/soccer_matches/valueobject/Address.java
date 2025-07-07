@@ -1,6 +1,6 @@
 package com.neocamp.soccer_matches.valueobject;
 
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,5 +19,5 @@ public class Address {
     private String city;
 
     @Enumerated(EnumType.STRING)
-    private StateCode stateCode;
+    private StateCodeEnum stateCode;
 }

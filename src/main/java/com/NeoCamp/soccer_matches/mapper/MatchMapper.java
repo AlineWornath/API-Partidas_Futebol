@@ -7,6 +7,7 @@ import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper (componentModel = "spring", uses = {ClubMapper.class, StadiumMapper.class})
 public interface MatchMapper {
@@ -15,4 +16,10 @@ public interface MatchMapper {
     MatchEntity toEntity(MatchRequestDto dto, ClubEntity homeClub, ClubEntity awayClub, StadiumEntity stadium);
 
     MatchResponseDto toDto(MatchEntity match);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "homeClub", ignore = true)
+    @Mapping(target = "awayClub", ignore = true)
+    @Mapping(target = "stadium", ignore = true)
+    void updateEntityFromDto(MatchRequestDto dto, @MappingTarget MatchEntity entity);
 }

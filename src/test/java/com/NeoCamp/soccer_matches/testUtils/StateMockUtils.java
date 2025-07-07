@@ -2,23 +2,23 @@ package com.neocamp.soccer_matches.testUtils;
 
 import com.neocamp.soccer_matches.dto.state.StateResponseDto;
 import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCode;
+import com.neocamp.soccer_matches.enums.StateCodeEnum;
 
 public class StateMockUtils {
     public static StateEntity rs() {
-        return new StateEntity("Rio Grande do Sul", StateCode.RS);
+        return new StateEntity("Rio Grande do Sul", StateCodeEnum.RS);
     }
 
     public static StateEntity sp() {
-        return new StateEntity("São Paulo", StateCode.SP);
+        return new StateEntity("São Paulo", StateCodeEnum.SP);
     }
 
     public static StateEntity rj() {
-        return new StateEntity("Rio de Janeiro", StateCode.RJ);
+        return new StateEntity("Rio de Janeiro", StateCodeEnum.RJ);
     }
 
-    public static StateEntity custom(String name, StateCode stateCode) {
-        return new StateEntity(name, stateCode);
+    public static StateEntity custom(String name, StateCodeEnum stateCodeEnum) {
+        return new StateEntity(name, stateCodeEnum);
     }
 
 
