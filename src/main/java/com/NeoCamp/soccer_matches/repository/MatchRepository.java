@@ -26,7 +26,7 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
     Page<MatchEntity> listMatchesByFilters(
             @Param("clubId") Long clubId,
             @Param("stadiumId")Long stadiumId,
-            @Param("rout") Boolean  isRout,
+            @Param("isRout") Boolean  isRout,
             @Param("isHome") Boolean isHome,
             @Param("isAway") Boolean isAway,
             Pageable pageable

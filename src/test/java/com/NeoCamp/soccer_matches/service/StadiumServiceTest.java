@@ -56,6 +56,8 @@ public class StadiumServiceTest {
         Page<StadiumEntity> stadiums = new PageImpl<>(List.of(maracanaEntity, morumbiEntity), pageable, 2);
 
         Mockito.when(stadiumRepository.findAll(pageable)).thenReturn(stadiums);
+        Mockito.when(stadiumMapper.toDto(maracanaEntity)).thenReturn(StadiumMockUtils.maracanaResponseDto());
+        Mockito.when(stadiumMapper.toDto(morumbiEntity)).thenReturn(StadiumMockUtils.morumbiResponseDto());
 
         Page<StadiumResponseDto> result = stadiumService.findAll(pageable);
 
