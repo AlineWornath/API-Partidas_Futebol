@@ -3,14 +3,19 @@ package com.neocamp.soccer_matches.testUtils;
 import com.neocamp.soccer_matches.dto.stadium.StadiumRequestDto;
 import com.neocamp.soccer_matches.dto.stadium.StadiumResponseDto;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
+import com.neocamp.soccer_matches.valueobject.Address;
 
 public class StadiumMockUtils {
     public static StadiumEntity maracana() {
-        return new StadiumEntity(2L, "Maracanã", null);
+        Address address = new Address();
+        address.setCity("Rio de Janeiro");
+        return new StadiumEntity(2L, "Maracanã", address);
     }
 
     public static StadiumEntity morumbi() {
-        return new StadiumEntity(3L, "Morumbi", null);
+        Address address = new Address();
+        address.setCity("São Paulo");
+        return new StadiumEntity(3L, "Morumbi", address);
     }
 
     public static StadiumEntity custom(String name) {
