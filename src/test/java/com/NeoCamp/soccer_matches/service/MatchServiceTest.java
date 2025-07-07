@@ -8,10 +8,12 @@ import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.mapper.MatchMapper;
+import com.neocamp.soccer_matches.repository.ClubRepository;
 import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.MatchMockUtils;
 import com.neocamp.soccer_matches.testUtils.StadiumMockUtils;
+import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,13 +37,16 @@ public class MatchServiceTest {
     private MatchRepository matchRepository;
 
     @Mock
-    private ClubService clubService;
+    private MatchMapper matchMapper;
+
+    @Mock
+    private ExistenceValidator existenceValidator;
+
+    @Mock
+    private ClubRepository clubRepository;
 
     @Mock
     private StadiumService stadiumService;
-
-    @Mock
-    private MatchMapper matchMapper;
 
     @InjectMocks
     private MatchService matchService;
@@ -104,7 +109,7 @@ public class MatchServiceTest {
 
         Page<MatchEntity> matches = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
 
-        Mockito.when(clubService.findEntityById(flamengoId)).thenReturn(flamengoEntity);
+        Mockito.doNothing().when(existenceValidator).validateClubExists(flamengoId);
         Mockito.when(matchRepository.listMatchesByFilters(flamengoId, null, null, pageable))
                 .thenReturn(matches);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
@@ -123,7 +128,7 @@ public class MatchServiceTest {
 
         Page<MatchEntity> matches = new PageImpl<>(List.of(corinthiansVsGremioAtMorumbi));
 
-        Mockito.when(stadiumService.findEntityById(morumbiId)).thenReturn(morumbiEntity);
+        Mockito.doNothing().when(existenceValidator).validateStadiumExists(morumbiId);
         Mockito.when(matchRepository.listMatchesByFilters(null, morumbiId,null, pageable))
                 .thenReturn(matches);
         Mockito.when(matchMapper.toDto(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioResponseDto);
@@ -142,8 +147,8 @@ public class MatchServiceTest {
 
         Page<MatchEntity> matches = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
 
-        Mockito.when(clubService.findEntityById(corinthiansId)).thenReturn(corinthiansEntity);
-        Mockito.when(stadiumService.findEntityById(maracanaId)).thenReturn(maracanaEntity);
+        Mockito.doNothing().when(existenceValidator).validateClubExists(corinthiansId);
+        Mockito.doNothing().when(existenceValidator).validateStadiumExists(maracanaId);
         Mockito.when(matchRepository.listMatchesByFilters(corinthiansId, maracanaId, null, pageable)).
                 thenReturn(matches);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
@@ -164,11 +169,10 @@ public class MatchServiceTest {
 
         Page<MatchEntity> emptyPage = Page.empty(pageable);
 
-        Mockito.when(clubService.findEntityById(clubId)).thenReturn(null);
-        Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(null);
-        Mockito.when(matchRepository.listMatchesByFilters(null, null,null, pageable))
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+        Mockito.doNothing().when(existenceValidator).validateStadiumExists(stadiumId);
+        Mockito.when(matchRepository.listMatchesByFilters(clubId, stadiumId, null, pageable))
                 .thenReturn(emptyPage);
-        Mockito.when(matchRepository.listMatchesByFilters(clubId, stadiumId, null, pageable)).thenReturn(emptyPage);
 
         Page<MatchResponseDto> result = matchService.listMatchesByFilters(clubId, stadiumId, null, pageable);
 
@@ -235,8 +239,8 @@ public class MatchServiceTest {
         Long awayClubId = corinthiansVsGremioRequestDto.getAwayClubId();
         Long stadiumId = corinthiansVsGremioRequestDto.getStadiumId();
 
-        Mockito.when(clubService.findEntityById(homeClubId)).thenReturn(corinthiansEntity);
-        Mockito.when(clubService.findEntityById(awayClubId)).thenReturn(gremioEntity);
+        Mockito.when(clubRepository.findById(homeClubId)).thenReturn(Optional.of(corinthiansEntity));
+        Mockito.when(clubRepository.findById(awayClubId)).thenReturn(Optional.of(gremioEntity));
         Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(morumbiEntity);
         Mockito.when(matchMapper.toEntity(corinthiansVsGremioRequestDto, corinthiansEntity,
                 gremioEntity, morumbiEntity)).thenReturn(corinthiansVsGremioAtMorumbi);
@@ -272,8 +276,8 @@ public class MatchServiceTest {
         Long stadiumId = updateRequest.getStadiumId();
 
         Mockito.when(matchRepository.findById(1L)).thenReturn(Optional.of(existingMatch));
-        Mockito.when(clubService.findEntityById(homeClubId)).thenReturn(gremioEntity);
-        Mockito.when(clubService.findEntityById(awayClubId)).thenReturn(flamengoEntity);
+        Mockito.when(clubRepository.findById(homeClubId)).thenReturn(Optional.of(gremioEntity));
+        Mockito.when(clubRepository.findById(awayClubId)).thenReturn(Optional.of(flamengoEntity));
         Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(morumbiEntity);
         Mockito.when(matchRepository.save(existingMatch)).thenReturn(existingMatch);
         Mockito.when(matchMapper.toDto(existingMatch)).thenReturn(updatedResponse);

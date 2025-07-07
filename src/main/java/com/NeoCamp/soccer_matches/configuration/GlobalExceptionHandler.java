@@ -98,6 +98,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    public ResponseEntity<ErrorResponse> illegalArgumentException(
+            IllegalArgumentException e, HttpServletRequest request) {
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        String query = request.getQueryString();
+        String message = e.getMessage();
+
+        log.warn("IllegalArgumentException - [{} {}]  Path: {} | Query: {} | Message: {}",
+                method, path, path, query, message, e);
+
+        ErrorResponse errorResponse = new ErrorResponse(message, null, HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(), LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> otherErrors(Exception e, HttpServletRequest request) {

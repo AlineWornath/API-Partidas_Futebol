@@ -78,9 +78,9 @@ public class ClubService {
     }
 
     public ClubResponseDto save(ClubRequestDto clubRequestDto) {
-        existenceValidator.validateStateCode(clubRequestDto.getStateCode());
+        StateCodeEnum stateEnum = existenceValidator.validateStateCode(clubRequestDto.getStateCode());
+        StateEntity homeState = stateService.findByCode(stateEnum);
 
-        StateEntity homeState = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
         ClubEntity club = clubMapper.toEntity(clubRequestDto, homeState);
         ClubEntity savedClub = clubRepository.save(club);
 
@@ -90,8 +90,8 @@ public class ClubService {
     public ClubResponseDto update(Long id, ClubRequestDto clubRequestDto) {
         ClubEntity club = findEntityById(id);
 
-        existenceValidator.validateStateCode(clubRequestDto.getStateCode());
-        StateEntity state = stateService.findByCode(StateCodeEnum.valueOf(clubRequestDto.getStateCode()));
+        StateCodeEnum stateEnum = existenceValidator.validateStateCode(clubRequestDto.getStateCode());
+        StateEntity state = stateService.findByCode(stateEnum);
         club.setHomeState(state);
 
         clubMapper.updateEntityFromDto(clubRequestDto, club);

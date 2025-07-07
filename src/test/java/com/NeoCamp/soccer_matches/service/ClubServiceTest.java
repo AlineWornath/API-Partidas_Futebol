@@ -10,7 +10,6 @@ import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.ClubMapper;
 import com.neocamp.soccer_matches.repository.ClubRepository;
-import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.StateMockUtils;
 import com.neocamp.soccer_matches.validator.ExistenceValidator;
@@ -27,8 +26,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,16 +36,18 @@ public class ClubServiceTest {
 
     @Mock
     private ClubRepository clubRepository;
-    @Mock
-    private StateService stateService;
+
     @Mock
     private ClubMapper clubMapper;
+
     @Mock
-    private MatchRepository matchRepository;
-    @Mock
-    private ExistenceValidator existenceValidator;
+    private StateService stateService;
+
     @Mock
     private MatchService matchService;
+
+    @Mock
+    private ExistenceValidator existenceValidator;
 
     @InjectMocks
     private ClubService clubService;
@@ -61,8 +60,6 @@ public class ClubServiceTest {
 
     @BeforeEach
     public void setUp() {
-        existenceValidator = Mockito.mock(ExistenceValidator.class);
-        matchService = Mockito.mock(MatchService.class);
 
         pageable = PageRequest.of(0, 10);
 
@@ -113,8 +110,6 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByHomeState() {
-        Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
-
         Page<ClubEntity> clubs = new PageImpl<>(List.of(gremioEntity), pageable, 1);
 
         Mockito.when(clubRepository.listClubsByFilters(null, StateCodeEnum.RS,  null, pageable ))
@@ -147,8 +142,6 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByHomeStateAndActive() {
-        Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
-
         gremioEntity.setActive(true);
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(gremioEntity), pageable, 1);
@@ -166,8 +159,6 @@ public class ClubServiceTest {
 
     @Test
     public void shouldListClubsByNameAndHomeStateAndActive() {
-        Mockito.when(stateService.findByCode(StateCodeEnum.RJ)).thenReturn(rj);
-
         flamengoEntity.setActive(true);
 
         Page<ClubEntity> clubs = new PageImpl<>(List.of(flamengoEntity), pageable, 1);
@@ -251,10 +242,8 @@ public class ClubServiceTest {
         ClubStatsResponseDto mockStats = new ClubStatsResponseDto(clubId, "Grêmio",
                 5L, 9L, 8L, 11L, 15L);
 
-        ClubEntity gremio = ClubMockUtils.gremio();
-
-        Mockito.when(clubRepository.findById(clubId)).thenReturn(Optional.of(gremio));
-        Mockito.when(matchRepository.getClubStats(clubId, null)).thenReturn(mockStats);
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+        Mockito.when(matchService.getClubStats(clubId, null)).thenReturn(mockStats);
 
         ClubStatsResponseDto result = clubService.getClubStats(clubId, null);
 
@@ -272,9 +261,8 @@ public class ClubServiceTest {
 
         List<ClubVersusClubStatsDto> statsList = List.of(mockOpponentStats);
 
-        ClubEntity gremio = ClubMockUtils.gremio();
-        Mockito.when(clubRepository.findById(id)).thenReturn(Optional.of(gremio));
-        Mockito.when(matchRepository.getClubVersusOpponentsStats(id, null)).thenReturn(statsList);
+        Mockito.doNothing().when(existenceValidator).validateClubExists(id);
+        Mockito.when(matchService.getClubVersusOpponentsStats(id, null)).thenReturn(statsList);
 
         List<ClubVersusClubStatsDto> result = clubService.getClubVersusOpponentsStats(id, null);
 
@@ -289,6 +277,7 @@ public class ClubServiceTest {
         gremioEntity.setId(12L);
         gremioResponseDto.setId(12L);
 
+        Mockito.when(existenceValidator.validateStateCode(gremioRequestDto.getStateCode())).thenReturn(StateCodeEnum.RS);
         Mockito.when(stateService.findByCode(StateCodeEnum.RS)).thenReturn(rs);
         Mockito.when(clubMapper.toEntity(gremioRequestDto, rs)).thenReturn(gremioEntity);
         Mockito.when(clubRepository.save(gremioEntity)).thenReturn(gremioEntity);
@@ -308,10 +297,14 @@ public class ClubServiceTest {
         ClubRequestDto clubDto = ClubMockUtils.customRequest("club2",invalidStateCode,
                 LocalDate.of(2020, 3, 15), true);
 
-        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
+        Mockito.doThrow(new BusinessException("Invalid state code: " + invalidStateCode))
+                .when(existenceValidator).validateStateCode(invalidStateCode);
+
+        BusinessException exception = Assertions.assertThrows(BusinessException.class,
                 () -> clubService.save(clubDto));
 
         Mockito.verify(clubRepository, Mockito.never()).save(Mockito.any());
+        Assertions.assertTrue(exception.getMessage().contains("Invalid state code: " + invalidStateCode));
     }
 
     @Test
@@ -330,6 +323,7 @@ public class ClubServiceTest {
         updatedResponse.setId(existingClubId);
 
         Mockito.when(clubRepository.findById(existingClubId)).thenReturn(Optional.of(existingClub));
+        Mockito.when(existenceValidator.validateStateCode(updateRequest.getStateCode())).thenReturn(StateCodeEnum.RJ);
         Mockito.when(stateService.findByCode(StateCodeEnum.RJ)).thenReturn(rj);
         Mockito.when(clubRepository.save(existingClub)).thenReturn(existingClub);
         Mockito.when(clubMapper.toDto(existingClub)).thenReturn(updatedResponse);
@@ -365,6 +359,8 @@ public class ClubServiceTest {
         ClubEntity existingClub = new ClubEntity();
         existingClub.setId(validId);
         Mockito.when(clubRepository.findById(validId)).thenReturn(Optional.of(existingClub));
+        Mockito.doThrow(new BusinessException("Invalid state code: " + invalidStateCode))
+                .when(existenceValidator).validateStateCode(invalidStateCode);
 
         BusinessException exception = Assertions.assertThrows(BusinessException.class,
                 () -> clubService.update(validId, requestDto));

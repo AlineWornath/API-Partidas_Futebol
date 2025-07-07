@@ -21,9 +21,9 @@ public class ExistenceValidator {
         }
     }
 
-    public void validateStateCode(String code) {
+    public StateCodeEnum validateStateCode(String code) {
         try {
-            StateCodeEnum.valueOf(code.toUpperCase());
+            return StateCodeEnum.valueOf(code.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new BusinessException("Invalid state code: " + code);
         }
