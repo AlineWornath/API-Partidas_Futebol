@@ -98,7 +98,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    public ResponseEntity<ErrorResponse> illegalArgumentException(
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> illegalArgument(
             IllegalArgumentException e, HttpServletRequest request) {
         String method = request.getMethod();
         String path = request.getRequestURI();

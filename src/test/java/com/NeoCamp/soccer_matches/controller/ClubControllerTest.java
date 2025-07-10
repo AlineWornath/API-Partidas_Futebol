@@ -5,6 +5,8 @@ import com.neocamp.soccer_matches.dto.club.ClubRequestDto;
 import com.neocamp.soccer_matches.dto.club.ClubResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubStatsResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
+import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
+import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.dto.state.StateResponseDto;
 import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.service.ClubService;
@@ -201,6 +203,31 @@ public class ClubControllerTest {
                 .andExpect(jsonPath("$[0].clubName").value("Coritiba"))
                 .andExpect(jsonPath("$[0].opponentName").value("Santos"))
                 .andExpect(jsonPath("$[0].totalWins").value(5L));
+    }
+
+    @Test
+    public void shouldReturn200AndHeadToHeadStats() throws Exception {
+        Long clubId = 8L;
+        String clubName = "Corinthians";
+        Long opponentId = 2L;
+        String opponentName = "Santos";
+
+        ClubVersusClubStatsDto stats = new ClubVersusClubStatsDto(clubId, clubName, opponentId, opponentName,
+                5L, 3L, 6L, 15L, 9L);
+        MatchResponseDto match = new MatchResponseDto();
+        match.setId(1L);
+        List<MatchResponseDto> matches = List.of(match);
+
+        HeadToHeadResponseDto mockHeadToHead = new HeadToHeadResponseDto(stats, matches);
+
+        Mockito.when(clubService.getHeadToHeadStats(clubId, opponentId, null)).thenReturn(mockHeadToHead);
+
+        mockMvc.perform(get("/clubs/{clubId}/head-to-head/{opponentId}", clubId,  opponentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stats.clubId").value(8))
+                .andExpect(jsonPath("$.stats.clubName").value("Corinthians"))
+                .andExpect(jsonPath("$.stats.opponentName").value("Santos"))
+                .andExpect(jsonPath("$.matches[0].id").value(1));
     }
 
     @Test

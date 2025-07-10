@@ -4,6 +4,7 @@ import com.neocamp.soccer_matches.dto.club.ClubRequestDto;
 import com.neocamp.soccer_matches.dto.club.ClubResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubStatsResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
+import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
 import com.neocamp.soccer_matches.enums.StateCodeEnum;
@@ -253,6 +254,19 @@ public class ClubServiceTest {
     }
 
     @Test
+    public void shouldThrowException_whenGetClubStatsWithInvalidId() {
+        Long invalidId = -10L;
+
+        Mockito.doThrow(new EntityNotFoundException("Club not found: " + invalidId)).when(existenceValidator)
+                .validateClubExists(invalidId);
+
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class,
+                () -> existenceValidator.validateClubExists(invalidId));
+
+        Assertions.assertTrue(exception.getMessage().contains("Club not found: "));
+    }
+
+    @Test
     public void shouldReturnClubVersusOpponentsStats_whenValidClubId() {
         Long id = 15L;
 
@@ -270,6 +284,38 @@ public class ClubServiceTest {
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals("Flamengo", result.getFirst().getOpponentName());
         Assertions.assertEquals(15, result.getFirst().getGoalsScored());
+    }
+
+    @Test
+    public void shouldReturnHeadToHeadStats_whenValidClubIds() {
+        Long clubId = flamengoEntity.getId();
+        Long opponentId = gremioEntity.getId();
+
+        HeadToHeadResponseDto mockHeadToHeadStats = new HeadToHeadResponseDto();
+
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+        Mockito.doNothing().when(existenceValidator).validateClubExists(opponentId);
+        Mockito.when(matchService.getHeadToHeadStats(clubId, opponentId, null)).thenReturn(mockHeadToHeadStats);
+
+        HeadToHeadResponseDto result = clubService.getHeadToHeadStats(clubId, opponentId, null);
+
+        Assertions.assertSame(mockHeadToHeadStats, result);
+        Mockito.verify(existenceValidator, Mockito.times(1)).validateClubExists(clubId);
+        Mockito.verify(existenceValidator, Mockito.times(1)).validateClubExists(opponentId);
+        Mockito.verify(matchService, Mockito.times(1))
+                .getHeadToHeadStats(clubId, opponentId, null);
+    }
+
+    @Test
+    public void shouldThrowException_whenGetHeadToHeadStatsWithSameClubIds() {
+        Long clubId = flamengoEntity.getId();
+
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+
+        BusinessException exception = Assertions.assertThrows(BusinessException.class,
+                () -> clubService.getHeadToHeadStats(clubId, clubId, null));
+
+        Assertions.assertTrue(exception.getMessage().contains("Head-to-head comparison requires two different clubs"));
     }
 
     @Test

@@ -34,7 +34,7 @@ public class MatchRepositoryTest {
     @Autowired
     private StateRepository stateRepository;
 
-    private ClubEntity gremio;
+    private ClubEntity gremio, corinthians, flamengo;
     private StadiumEntity maracana;
     private Long gremioId, maracanaId;
     private Pageable pageable;
@@ -51,9 +51,9 @@ public class MatchRepositoryTest {
 
         gremio = new ClubEntity("Grêmio", rs,
                 LocalDate.of(1945, 7, 23), true);
-        ClubEntity flamengo = new ClubEntity("Flamengo", rj,
+        flamengo = new ClubEntity("Flamengo", rj,
                 LocalDate.of(1970, 2, 10), true);
-        ClubEntity corinthians = new ClubEntity("Corinthians", sp,
+        corinthians = new ClubEntity("Corinthians", sp,
                 LocalDate.of(1930, 4, 19), true);
         ClubEntity inativo = new ClubEntity("Inativo", sp,
                 LocalDate.of(1950, 9, 27), false);
@@ -124,5 +124,18 @@ public class MatchRepositoryTest {
 
         Assertions.assertEquals(2, statsList.size());
         assertThat(statsList).extracting(ClubVersusClubStatsDto::getOpponentName).contains("Corinthians", "Flamengo");
+    }
+
+    @Test
+    public void shouldCalculateHeadToHeadStats() {
+        Long clubId = gremio.getId();
+        Long opponentId = corinthians.getId();
+        ClubVersusClubStatsDto headToHeadStats = matchRepository.getHeadToHeadStats(clubId, opponentId, null);
+
+        Assertions.assertEquals(0, headToHeadStats.getTotalWins());
+        Assertions.assertEquals(1, headToHeadStats.getTotalDraws());
+        Assertions.assertEquals(0, headToHeadStats.getTotalLosses());
+        Assertions.assertEquals(1, headToHeadStats.getGoalsScored());
+        Assertions.assertEquals(1, headToHeadStats.getGoalsConceded());
     }
 }
