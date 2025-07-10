@@ -98,9 +98,9 @@ public class MatchControllerIntegrationTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.content[0].awayClub.name").value("Grêmio"))
-                .andExpect(jsonPath("$.content[1].stadium.name").value("Morumbi"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.content[0].awayClubName").value("Grêmio"))
+                .andExpect(jsonPath("$.content[1].stadiumName").value("Morumbi"));
     }
 
     @Test
@@ -113,9 +113,9 @@ public class MatchControllerIntegrationTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("São Paulo"))
-                .andExpect(jsonPath("$.content[0].awayClub.name").value("Grêmio"))
-                .andExpect(jsonPath("$.content[0].stadium.name").value("Morumbi"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("São Paulo"))
+                .andExpect(jsonPath("$.content[0].awayClubName").value("Grêmio"))
+                .andExpect(jsonPath("$.content[0].stadiumName").value("Morumbi"));
     }
 
     @Test
@@ -128,8 +128,8 @@ public class MatchControllerIntegrationTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].stadium.name").value("Maracanã"))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Flamengo"));
+                .andExpect(jsonPath("$.content[0].stadiumName").value("Maracanã"))
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Flamengo"));
     }
 
     @Test
@@ -150,9 +150,9 @@ public class MatchControllerIntegrationTest {
     public void shouldGetMatchById() throws Exception {
         mockMvc.perform(get("/matches/{id}", flamengoVsGremioAtMaracana.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.awayClub.id").value(gremio.getId()))
-                .andExpect(jsonPath("$.stadium.name").value("Maracanã"));
+                .andExpect(jsonPath("$.homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.awayClubId").value(gremio.getId()))
+                .andExpect(jsonPath("$.stadiumName").value("Maracanã"));
     }
 
     @Test
@@ -179,9 +179,9 @@ public class MatchControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.homeClub.name").value("Flamengo"))
+                .andExpect(jsonPath("$.homeClubName").value("Flamengo"))
                 .andExpect(jsonPath("$.homeGoals").value(homeGoals))
-                .andExpect(jsonPath("$.stadium.name").value("Maracanã"));
+                .andExpect(jsonPath("$.stadiumName").value("Maracanã"));
     }
 
     @Test
@@ -218,9 +218,9 @@ public class MatchControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.homeClub.name").value("São Paulo"))
-                .andExpect(jsonPath("$.awayClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.stadium.name").value("Morumbi"));
+                .andExpect(jsonPath("$.homeClubName").value("São Paulo"))
+                .andExpect(jsonPath("$.awayClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.stadiumName").value("Morumbi"));
     }
 
     @Test

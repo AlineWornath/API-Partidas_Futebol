@@ -1,13 +1,10 @@
 package com.neocamp.soccer_matches.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.neocamp.soccer_matches.dto.club.ClubResponseDto;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
-import com.neocamp.soccer_matches.dto.stadium.StadiumResponseDto;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.service.MatchService;
-import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.MatchMockUtils;
 import com.neocamp.soccer_matches.testUtils.StadiumMockUtils;
 import jakarta.persistence.EntityNotFoundException;
@@ -59,9 +56,9 @@ public class MatchControllerTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.content[0].awayClub.name").value("Corinthians"))
-                .andExpect(jsonPath("$.content[1].awayClub.name").value("Grêmio"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.content[0].awayClubName").value("Corinthians"))
+                .andExpect(jsonPath("$.content[1].awayClubName").value("Grêmio"));
     }
 
     @Test
@@ -80,8 +77,8 @@ public class MatchControllerTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Corinthians"))
-                .andExpect(jsonPath("$.content[0].awayClub.name").value("Grêmio"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Corinthians"))
+                .andExpect(jsonPath("$.content[0].awayClubName").value("Grêmio"));
     }
 
     @Test
@@ -102,8 +99,8 @@ public class MatchControllerTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.content[0].awayClub.name").value("Corinthians"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.content[0].awayClubName").value("Corinthians"));
     }
 
     @Test
@@ -124,8 +121,8 @@ public class MatchControllerTest {
                 .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].homeClub.name").value("Corinthians"))
-                .andExpect(jsonPath("$.content[0].stadium.name").value("Morumbi"));
+                .andExpect(jsonPath("$.content[0].homeClubName").value("Corinthians"))
+                .andExpect(jsonPath("$.content[0].stadiumName").value("Morumbi"));
     }
 
     @Test
@@ -138,8 +135,8 @@ public class MatchControllerTest {
 
         mockMvc.perform(get("/matches/{id}", matchId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.awayClub.name").value("Corinthians"))
+                .andExpect(jsonPath("$.homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.awayClubName").value("Corinthians"))
                 .andExpect(jsonPath("$.id").value(1));
     }
 
@@ -166,8 +163,8 @@ public class MatchControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.homeClub.name").value("Flamengo"))
-                .andExpect(jsonPath("$.awayClub.name").value("Corinthians"));
+                .andExpect(jsonPath("$.homeClubName").value("Flamengo"))
+                .andExpect(jsonPath("$.awayClubName").value("Corinthians"));
     }
 
     @Test
@@ -185,18 +182,18 @@ public class MatchControllerTest {
     public void shouldReturn200AndMatchDetails_whenUpdateValidMatch() throws Exception {
         Long matchId = 1L;
         Long homeClubId = 2L;
+        String homeClubName = "Grêmio";
         Long awayClubId = 3L;
+        String awayClubName = "Flamengo";
         int homeGoals = 2, awayGoals = 3;
         Long stadiumId = 4L;
-        ClubResponseDto homeClub = ClubMockUtils.gremioResponseDto();
-        ClubResponseDto awayClub = ClubMockUtils.flamengoResponseDto();
-        StadiumResponseDto stadium = StadiumMockUtils.morumbiResponseDto();
+        String stadiumName = "Morumbi";
 
         MatchRequestDto updateRequestDto = MatchMockUtils.customRequest(homeClubId, awayClubId,
                 homeGoals, awayGoals, stadiumId);
 
-        MatchResponseDto updatedResponseDto = MatchMockUtils.customResponse(matchId, homeClub, awayClub,
-                homeGoals, awayGoals, stadium);
+        MatchResponseDto updatedResponseDto = MatchMockUtils.customResponse(matchId, homeClubId, homeClubName, awayClubId,
+                awayClubName, homeGoals, awayGoals, stadiumId, stadiumName);
 
         Mockito.when(matchService.update(matchId, updateRequestDto)).thenReturn(updatedResponseDto);
 
@@ -204,8 +201,8 @@ public class MatchControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.homeClub.name").value("Grêmio"))
-                .andExpect(jsonPath("$.awayClub.name").value("Flamengo"))
+                .andExpect(jsonPath("$.homeClubName").value("Grêmio"))
+                .andExpect(jsonPath("$.awayClubName").value("Flamengo"))
                 .andExpect(jsonPath("$.id").value(1));
     }
 

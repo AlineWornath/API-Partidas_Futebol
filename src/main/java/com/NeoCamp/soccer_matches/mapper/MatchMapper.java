@@ -15,6 +15,12 @@ public interface MatchMapper {
     @Mapping(target = "id", ignore = true)
     MatchEntity toEntity(MatchRequestDto dto, ClubEntity homeClub, ClubEntity awayClub, StadiumEntity stadium);
 
+    @Mapping(source = "homeClub.id", target = "homeClubId")
+    @Mapping(source = "homeClub.name", target = "homeClubName")
+    @Mapping(source = "awayClub.id", target = "awayClubId")
+    @Mapping(source = "awayClub.name", target = "awayClubName")
+    @Mapping(source = "stadium.id", target = "stadiumId")
+    @Mapping(source = "stadium.name", target = "stadiumName")
     MatchResponseDto toDto(MatchEntity match);
 
     @Mapping(target = "id", ignore = true)
