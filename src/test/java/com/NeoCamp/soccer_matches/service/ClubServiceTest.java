@@ -121,7 +121,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Grêmio", result.getContent().getFirst().getName());
-        Assertions.assertEquals("RS", result.getContent().getFirst().getHomeState().getCode());
+        Assertions.assertEquals("RS", result.getContent().getFirst().getHomeStateCode());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Corinthians", result.getContent().getFirst().getName());
-        Assertions.assertEquals("SP", result.getContent().getFirst().getHomeState().getCode());
+        Assertions.assertEquals("SP", result.getContent().getFirst().getHomeStateCode());
     }
 
     @Test
@@ -155,7 +155,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Grêmio", result.getContent().getFirst().getName());
-        Assertions.assertEquals("RS", result.getContent().getFirst().getHomeState().getCode());
+        Assertions.assertEquals("RS", result.getContent().getFirst().getHomeStateCode());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("Flamengo", result.getContent().getFirst().getName());
-        Assertions.assertEquals("RJ", result.getContent().getFirst().getHomeState().getCode());
+        Assertions.assertEquals("RJ", result.getContent().getFirst().getHomeStateCode());
         Assertions.assertTrue(result.getContent().getFirst().getActive());
     }
 
@@ -201,7 +201,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals("Grêmio", result.getName());
         Assertions.assertEquals(10L, result.getId());
-        Assertions.assertEquals("RS", result.getHomeState().getCode());
+        Assertions.assertEquals("RS", result.getHomeStateCode());
     }
 
     @Test
@@ -334,7 +334,7 @@ public class ClubServiceTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(12L, result.getId());
         Assertions.assertEquals("Grêmio", result.getName());
-        Assertions.assertEquals("RS", result.getHomeState().getCode());
+        Assertions.assertEquals("RS", result.getHomeStateCode());
     }
 
     @Test
@@ -364,7 +364,7 @@ public class ClubServiceTest {
         ClubRequestDto updateRequest = ClubMockUtils.customRequest("newName", "RJ",
                 LocalDate.of(2015, 10, 27), true);
 
-        ClubResponseDto updatedResponse = ClubMockUtils.customResponse("newName", StateMockUtils.rjDto(),
+        ClubResponseDto updatedResponse = ClubMockUtils.customResponse("newName", "RJ",
                 LocalDate.of(2015, 10, 27),true);
         updatedResponse.setId(existingClubId);
 
@@ -378,7 +378,7 @@ public class ClubServiceTest {
 
         Assertions.assertEquals(1L, result.getId());
         Assertions.assertEquals("newName", result.getName());
-        Assertions.assertEquals("RJ", result.getHomeState().getCode());
+        Assertions.assertEquals("RJ", result.getHomeStateCode());
         Assertions.assertEquals(LocalDate.of(2015, 10, 27), result.getCreationDate());
     }
 

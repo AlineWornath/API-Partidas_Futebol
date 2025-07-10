@@ -23,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.neocamp.soccer_matches.testUtils.DateFormatter.CLUB_CREATION_DATE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -222,7 +223,7 @@ public class ClubControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(RequestDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value(name))
-                .andExpect(jsonPath("$.creationDate").value(creationDate.toString()))
+                .andExpect(jsonPath("$.creationDate").value(creationDate.format(CLUB_CREATION_DATE)))
                 .andExpect(jsonPath("$.active").value(active));
     }
 
@@ -253,7 +254,8 @@ public class ClubControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(newName))
-                .andExpect(jsonPath("$.creationDate").value(newCreationDate.toString()));
+                .andExpect(jsonPath("$.creationDate").value(newCreationDate
+                        .format(CLUB_CREATION_DATE)));
     }
 
     @Test

@@ -262,7 +262,7 @@ public class ClubControllerTest {
                 LocalDate.now(), true);
 
         StateResponseDto rjDto = StateMockUtils.rjDto();
-        ClubResponseDto updatedResponseDto = ClubMockUtils.customResponse("updatedName", rjDto,
+        ClubResponseDto updatedResponseDto = ClubMockUtils.customResponse("updatedName", "RJ",
                 LocalDate.now(), true);
         updatedResponseDto.setId(clubId);
 

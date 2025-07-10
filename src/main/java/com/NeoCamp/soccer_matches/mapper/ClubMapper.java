@@ -16,6 +16,7 @@ public interface ClubMapper {
     @Mapping(target = "name", source = "dto.name")
     ClubEntity toEntity(ClubRequestDto dto, StateEntity state);
 
+    @Mapping(source = "homeState.code", target = "homeStateCode")
     ClubResponseDto toDto(ClubEntity club);
 
     @Mapping(target = "id", ignore = true)
