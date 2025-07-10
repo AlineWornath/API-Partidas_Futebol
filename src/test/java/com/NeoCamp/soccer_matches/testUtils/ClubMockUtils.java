@@ -36,23 +36,23 @@ public class ClubMockUtils {
 
 
     public static ClubResponseDto gremioResponseDto() {
-        return new ClubResponseDto(1L, "Grêmio", StateMockUtils.rsDto(),
+        return new ClubResponseDto(1L, "Grêmio", "RS",
                 LocalDate.of(2003, 1, 10), true);
     }
 
     public static ClubResponseDto flamengoResponseDto() {
-        return new ClubResponseDto(2L, "Flamengo", StateMockUtils.rjDto(),
+        return new ClubResponseDto(2L, "Flamengo", "RJ",
                 LocalDate.of(1900, 2, 25), true);
     }
 
     public static ClubResponseDto corinthiansResponseDto() {
-        return new ClubResponseDto(3L, "Corinthians", StateMockUtils.spDto(),
+        return new ClubResponseDto(3L, "Corinthians", "SP",
                 LocalDate.of(1930, 4, 19), true);
     }
 
-    public static ClubResponseDto customResponse(String name, StateResponseDto homeState,
+    public static ClubResponseDto customResponse(String name, String homeStateCode,
                                                LocalDate creationDate, Boolean active) {
-        return new ClubResponseDto(null, name, homeState, creationDate, active);
+        return new ClubResponseDto(null, name, homeStateCode, creationDate, active);
     }
 
 

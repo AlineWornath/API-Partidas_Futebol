@@ -1,7 +1,6 @@
 package com.neocamp.soccer_matches.dto.club;
 
-import com.neocamp.soccer_matches.dto.state.StateResponseDto;
-import com.neocamp.soccer_matches.entity.ClubEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,15 +13,8 @@ import java.time.LocalDate;
 public class ClubResponseDto {
     private Long id;
     private String name;
-    private StateResponseDto homeState;
+    private String homeStateCode;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate creationDate;
     private Boolean active;
-
-    public ClubResponseDto(ClubEntity club) {
-        this.id = club.getId();
-        this.name = club.getName();
-        this.homeState = new StateResponseDto(club.getHomeState());
-        this.creationDate = club.getCreationDate();
-        this.active = club.getActive();
-    }
 }
