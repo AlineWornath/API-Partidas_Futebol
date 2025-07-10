@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -115,6 +116,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> invalidFormat(
+            HttpMessageNotReadableException e, HttpServletRequest request) {
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        String query = request.getQueryString();
+        String message;
+
+        if (e.getMessage() != null && e.getMessage().contains("LocalDateTime")) {
+            message = "Invalid date/time format. Use yyyy-MM-dd'T'HH:mm (e.g., 2023-05-12T15:52)";
+        } else if (e.getMessage() != null && e.getMessage().contains("LocalDate")) {
+            message = "Invalid date format. Use yyyy-MM-dd (e.g., 2023-05-12)";
+        } else {
+            message = "Invalid request body or formatting error. Please review your input.";
+        }
+
+        log.warn("DateTime format invalid - [{} {}]  Path: {} | Query: {} | Message: {}",
+                method, path, path, query, message, e);
+
+        ErrorResponse errorResponse = new ErrorResponse(message, null, HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(), LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> otherErrors(Exception e, HttpServletRequest request) {
         String method = request.getMethod();
@@ -125,7 +151,7 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error - [{} {}] Path: {} | Query: {} |Error: {}",
                 method, path, path, query, message, e);
 
-        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), null,
+        ErrorResponse errorResponse = new ErrorResponse(message, null,
                 HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 LocalDateTime.now());
 
