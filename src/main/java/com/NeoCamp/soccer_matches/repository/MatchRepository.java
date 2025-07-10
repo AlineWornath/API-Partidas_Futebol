@@ -105,6 +105,9 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
             OR (:matchFilter = 'ROUT' AND ABS(m.homeGoals - m.awayGoals) >= 3)
             OR (:matchFilter = 'HOME' AND m.homeClub.id = :clubId)
             OR (:matchFilter = 'AWAY' AND m.awayClub.id = :clubId))
+       GROUP BY
+          CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.id ELSE m.homeClub.id END,
+          CASE WHEN m.homeClub.id = :clubId THEN m.awayClub.name ELSE m.homeClub.name END
 """)
     ClubVersusClubStatsDto getHeadToHeadStats(
             @Param("clubId") Long clubId,
