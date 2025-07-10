@@ -108,6 +108,9 @@ public class MatchService {
     }
 
     public List<ClubRankingDto> getClubRanking(RankingOrderEnum rankingOrder) {
+        if (rankingOrder == null) {
+            throw new IllegalArgumentException("Unknown ranking order: null");
+        }
         switch (rankingOrder) {
             case MATCHES -> { return matchRepository.getClubRankingByTotalMatches(); }
             case WINS -> { return matchRepository.getClubRankingByTotalWins(); }

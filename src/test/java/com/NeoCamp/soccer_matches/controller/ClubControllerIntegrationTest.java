@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neocamp.soccer_matches.DesafioFutebolApplication;
 import com.neocamp.soccer_matches.dto.club.ClubRequestDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
+import com.neocamp.soccer_matches.entity.MatchEntity;
+import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
 import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.repository.ClubRepository;
+import com.neocamp.soccer_matches.repository.MatchRepository;
+import com.neocamp.soccer_matches.repository.StadiumRepository;
 import com.neocamp.soccer_matches.repository.StateRepository;
 import com.neocamp.soccer_matches.testUtils.StateTestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @SpringBootTest(classes = DesafioFutebolApplication.class)
 @AutoConfigureMockMvc
@@ -44,11 +49,18 @@ public class ClubControllerIntegrationTest {
     private StateRepository stateRepository;
 
     private ClubEntity gremio, flamengo, inactiveClub;
+    @Autowired
+    private MatchRepository matchRepository;
+    @Autowired
+    private StadiumRepository stadiumRepository;
 
     @BeforeEach
     public void setup() {
         StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
         StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
+
+        StadiumEntity maracana = new StadiumEntity("Maracanã");
+        stadiumRepository.save(maracana);
 
         gremio = new ClubEntity("Grêmio", rs,
                 LocalDate.of(1950, 3, 24), true);
@@ -61,6 +73,15 @@ public class ClubControllerIntegrationTest {
         inactiveClub = new ClubEntity("inactiveClub", rj,
                 LocalDate.of(1919, 10, 1), false);
         clubRepository.save(inactiveClub);
+
+
+        MatchEntity flamengoVsGremioAtMaracana = new MatchEntity(flamengo, gremio, 3, 1, maracana,
+                LocalDateTime.of(2023, 3, 2, 15, 45));
+        matchRepository.save(flamengoVsGremioAtMaracana);
+
+        MatchEntity gremioVsInactiveClubAtMaracana = new MatchEntity(gremio, inactiveClub, 1, 0, maracana,
+                LocalDateTime.of(2020, 1, 25, 16, 30));
+        matchRepository.save(gremioVsInactiveClubAtMaracana);
     }
 
     @Test
@@ -139,6 +160,52 @@ public class ClubControllerIntegrationTest {
 
         mockMvc.perform(get("/clubs/{id}",invalidId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturn200AndClubStats() throws Exception {
+        Long clubId = flamengo.getId();
+
+        mockMvc.perform(get("/clubs/{id}/stats", clubId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalWins").value(1))
+                .andExpect(jsonPath("$.totalLosses").value(0))
+                .andExpect(jsonPath("$.goalsScored").value(3));
+    }
+
+    @Test
+    public void shouldReturn200AndClubVersusOpponentsStats() throws Exception {
+        Long clubId = gremio.getId();
+
+        mockMvc.perform(get("/clubs/{id}/opponents/stats", clubId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].totalWins").value(0))
+                .andExpect(jsonPath("$[0].totalLosses").value(1))
+                .andExpect(jsonPath("$[0].goalsScored").value(1))
+                .andExpect(jsonPath("$[1].totalWins").value(1))
+                .andExpect(jsonPath("$[1].goalsConceded").value(0));
+    }
+
+    @Test
+    public void shouldReturn200AndHeadToHeadStats() throws Exception {
+        Long clubId = flamengo.getId();
+        Long opponentId = gremio.getId();
+
+        mockMvc.perform(get("/clubs/{clubId}/head-to-head/{opponentId}", clubId,  opponentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stats.totalWins").value(1))
+                .andExpect(jsonPath("$.stats.goalsScored").value(3))
+                .andExpect(jsonPath("$.stats.goalsConceded").value(1))
+                .andExpect(jsonPath("$.matches.length()").value(1));
+    }
+
+    @Test
+    public void shouldReturn200AndClubRanking_orderedByTotalGoals() throws Exception {
+        mockMvc.perform(get("/clubs/ranking")
+                .param("rankingOrderEnum", "GOALS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].clubName").value("Flamengo"))
+                .andExpect(jsonPath("$[1].clubName").value("Grêmio"));
     }
 
     @Test
