@@ -1,12 +1,10 @@
 package com.neocamp.soccer_matches.service;
 
 import com.neocamp.soccer_matches.dto.club.ClubRankingDto;
-import com.neocamp.soccer_matches.dto.club.ClubResponseDto;
 import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
 import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
-import com.neocamp.soccer_matches.dto.stadium.StadiumResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
@@ -58,11 +56,9 @@ public class MatchServiceTest {
 
     private Pageable pageable;
     private ClubEntity corinthiansEntity, flamengoEntity, gremioEntity;
-    private ClubResponseDto flamengoResponseDto, gremioResponseDto;
     private StadiumEntity maracanaEntity, morumbiEntity;
-    private StadiumResponseDto morumbiResponseDto;
     private MatchEntity flamengoVsCorinthiansAtMaracana, corinthiansVsGremioAtMorumbi;
-    private MatchRequestDto flamengoVsCorinthiansRequestDto, corinthiansVsGremioRequestDto;
+    private MatchRequestDto corinthiansVsGremioRequestDto;
     private MatchResponseDto flamengoVsCorinthiansResponseDto, corinthiansVsGremioResponseDto;
 
     @BeforeEach
@@ -73,18 +69,12 @@ public class MatchServiceTest {
         flamengoEntity = ClubMockUtils.flamengo();
         gremioEntity = ClubMockUtils.gremio();
 
-        flamengoResponseDto = ClubMockUtils.flamengoResponseDto();
-        gremioResponseDto = ClubMockUtils.gremioResponseDto();
-
         maracanaEntity = StadiumMockUtils.maracana();
         morumbiEntity = StadiumMockUtils.morumbi();
-
-        morumbiResponseDto = StadiumMockUtils.morumbiResponseDto();
 
         flamengoVsCorinthiansAtMaracana = MatchMockUtils.flamengoVsCorinthiansAtMaracana();
         corinthiansVsGremioAtMorumbi = MatchMockUtils.corinthiansVsGremioAtMorumbi();
 
-        flamengoVsCorinthiansRequestDto = MatchMockUtils.flamengoVsCorinthiansAtMaracanaRequestDto();
         corinthiansVsGremioRequestDto = MatchMockUtils.corinthiansVsGremioAtMorumbiRequestDto();
 
         flamengoVsCorinthiansResponseDto = MatchMockUtils.flamengoVsCorinthiansAtMaracanaResponseDto();
@@ -104,8 +94,8 @@ public class MatchServiceTest {
                 null, pageable);
 
         Assertions.assertEquals(2,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClub().getName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClub().getName());
+        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
+        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
     }
 
     @Test
@@ -123,8 +113,8 @@ public class MatchServiceTest {
                 null, pageable);
 
         Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClub().getName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClub().getName());
+        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
+        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
     }
 
     @Test
@@ -141,8 +131,8 @@ public class MatchServiceTest {
         Page<MatchResponseDto> result = matchService.listMatchesByFilters(null, morumbiId, null, pageable);
 
         Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getHomeClub().getName());
-        Assertions.assertEquals("Grêmio", result.getContent().getFirst().getAwayClub().getName());
+        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getHomeClubName());
+        Assertions.assertEquals("Grêmio", result.getContent().getFirst().getAwayClubName());
     }
 
     @Test
@@ -162,9 +152,9 @@ public class MatchServiceTest {
                 null, pageable);
 
         Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClub().getName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClub().getName());
-        Assertions.assertEquals("Maracanã", result.getContent().getFirst().getStadium().getName());
+        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
+        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
+        Assertions.assertEquals("Maracanã", result.getContent().getFirst().getStadiumName());
     }
 
     @Test
@@ -194,9 +184,9 @@ public class MatchServiceTest {
 
         MatchResponseDto result = matchService.findById(2L);
 
-        Assertions.assertEquals("Corinthians", result.getHomeClub().getName());
-        Assertions.assertEquals("Grêmio", result.getAwayClub().getName());
-        Assertions.assertEquals("Morumbi", result.getStadium().getName());
+        Assertions.assertEquals("Corinthians", result.getHomeClubName());
+        Assertions.assertEquals("Grêmio", result.getAwayClubName());
+        Assertions.assertEquals("Morumbi", result.getStadiumName());
         Assertions.assertEquals(2L, result.getId());
     }
 
@@ -254,9 +244,9 @@ public class MatchServiceTest {
 
         MatchResponseDto result = matchService.save(corinthiansVsGremioRequestDto);
 
-        Assertions.assertEquals("Corinthians", result.getHomeClub().getName());
-        Assertions.assertEquals("Grêmio", result.getAwayClub().getName());
-        Assertions.assertEquals("Morumbi", result.getStadium().getName());
+        Assertions.assertEquals("Corinthians", result.getHomeClubName());
+        Assertions.assertEquals("Grêmio", result.getAwayClubName());
+        Assertions.assertEquals("Morumbi", result.getStadiumName());
     }
 
     @Test
@@ -266,15 +256,13 @@ public class MatchServiceTest {
         MatchEntity existingMatch = flamengoVsCorinthiansAtMaracana;
         existingMatch.setId(existingMatchId);
 
-        MatchRequestDto updateRequest = flamengoVsCorinthiansRequestDto;
-        updateRequest.setHomeClubId(gremioEntity.getId());
-        updateRequest.setAwayClubId(flamengoEntity.getId());
-        updateRequest.setStadiumId(morumbiEntity.getId());
+        MatchRequestDto updateRequest = MatchMockUtils.customRequest(gremioEntity.getId(), flamengoEntity.getId(),
+                2, 3, morumbiEntity.getId());
 
         MatchResponseDto updatedResponse = flamengoVsCorinthiansResponseDto;
-        updatedResponse.setHomeClub(gremioResponseDto);
-        updatedResponse.setAwayClub(flamengoResponseDto);
-        updatedResponse.setStadium(morumbiResponseDto);
+        updatedResponse.setHomeClubName("Grêmio");
+        updatedResponse.setAwayClubName("Flamengo");
+        updatedResponse.setStadiumName("Morumbi");
 
         Long homeClubId = updateRequest.getHomeClubId();
         Long awayClubId = updateRequest.getAwayClubId();
@@ -289,9 +277,9 @@ public class MatchServiceTest {
 
         MatchResponseDto result = matchService.update(existingMatchId, updateRequest);
 
-        Assertions.assertEquals("Grêmio", result.getHomeClub().getName());
-        Assertions.assertEquals("Flamengo", result.getAwayClub().getName());
-        Assertions.assertEquals("Morumbi", result.getStadium().getName());
+        Assertions.assertEquals("Grêmio", result.getHomeClubName());
+        Assertions.assertEquals("Flamengo", result.getAwayClubName());
+        Assertions.assertEquals("Morumbi", result.getStadiumName());
     }
 
     @Test
