@@ -31,6 +31,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -250,6 +251,22 @@ public class MatchServiceTest {
     }
 
     @Test
+    public void shouldThrowException_whenSaveMatchWithUnknownHomeClub(){
+        Long unknownHomeClubId = -1L;
+        Long awayClubId = 2L;
+        Long stadiumId = 10L;
+        MatchRequestDto matchRequestDto = new MatchRequestDto(unknownHomeClubId, awayClubId, 1, 0,
+                stadiumId, LocalDateTime.of(2019, 1, 1, 0, 0, 0));
+
+        Mockito.when(clubRepository.findById(unknownHomeClubId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class,
+                () -> matchService.save(matchRequestDto));
+
+        Assertions.assertTrue(exception.getMessage().contains("Club not found"));
+    }
+
+    @Test
     public void shouldUpdateMatchSuccessfully(){
         Long existingMatchId = 1L;
 
@@ -391,11 +408,11 @@ public class MatchServiceTest {
     }
 
     @Test
-    public void shouldThrowException_whenUnknownRankingOrder(){
-        RankingOrderEnum invalidOrder = null;
+    public void shouldThrowException_whenNullRankingOrder(){
+        RankingOrderEnum nullOrder = null;
 
         IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
-                () -> matchService.getClubRanking(invalidOrder));
+                () -> matchService.getClubRanking(nullOrder));
 
         Assertions.assertTrue(exception.getMessage().contains("Unknown ranking order: "));
     }

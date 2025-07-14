@@ -7,6 +7,7 @@ import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
 import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.StateEntity;
+import com.neocamp.soccer_matches.enums.MatchFilterEnum;
 import com.neocamp.soccer_matches.enums.StateCodeEnum;
 import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.ClubMapper;
@@ -267,6 +268,19 @@ public class ClubServiceTest {
     }
 
     @Test
+    public void shouldThrowException_whenGetClubStatsWithFilterRout() {
+        Long clubId = 10L;
+        MatchFilterEnum filter = MatchFilterEnum.ROUT;
+
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+
+        BusinessException exception = Assertions.assertThrows(BusinessException.class,
+                () -> clubService.getClubStats(clubId, filter));
+
+        Assertions.assertTrue(exception.getMessage().contains("Filter rout is not supported"));
+    }
+
+    @Test
     public void shouldReturnClubVersusOpponentsStats_whenValidClubId() {
         Long id = 15L;
 
@@ -284,6 +298,19 @@ public class ClubServiceTest {
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals("Flamengo", result.getFirst().getOpponentName());
         Assertions.assertEquals(15, result.getFirst().getGoalsScored());
+    }
+
+    @Test
+    public void shouldThrowException_whenGetClubVersusOpponentsStatsWithFilterRout() {
+        Long clubId = 1L;
+        MatchFilterEnum filter = MatchFilterEnum.ROUT;
+
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+
+        BusinessException exception = Assertions.assertThrows(BusinessException.class,
+                () -> clubService.getClubVersusOpponentsStats(clubId, filter));
+
+        Assertions.assertTrue(exception.getMessage().contains("Filter rout is not supported"));
     }
 
     @Test
