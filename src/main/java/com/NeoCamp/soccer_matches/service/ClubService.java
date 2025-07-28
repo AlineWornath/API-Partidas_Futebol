@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +26,8 @@ public class ClubService {
     private final ClubRepository clubRepository;
     private final ClubMapper clubMapper;
     private final StateService stateService;
-    private final MatchService matchService;
     private final ExistenceValidator existenceValidator;
+    private final ClubStatsService clubStatsService;
 
     public Page<ClubResponseDto> listClubsByFilters(String name, StateCodeEnum stateCode, Boolean active,
                                                     Pageable pageable) {
@@ -45,13 +46,18 @@ public class ClubService {
                 .orElseThrow(() -> new EntityNotFoundException("Club not found: " + id));
     }
 
+    public ClubEntity findByUuid(UUID uuid) {
+        return clubRepository.findByUuid(uuid).orElseThrow(
+                () -> new EntityNotFoundException("Club not found: " + uuid));
+    }
+
     public ClubStatsResponseDto getClubStats(Long id, MatchFilterEnum filter) {
         existenceValidator.validateClubExists(id);
 
         if (MatchFilterEnum.ROUT.equals(filter)) {
             throw new BusinessException("Filter rout is not supported for this endpoint");
             }
-        return matchService.getClubStats(id, filter);
+        return clubStatsService.getClubStats(id, filter);
     }
 
     public List<ClubVersusClubStatsDto> getClubVersusOpponentsStats(Long id, MatchFilterEnum filter) {
@@ -60,7 +66,7 @@ public class ClubService {
         if (MatchFilterEnum.ROUT.equals(filter)) {
             throw new BusinessException("Filter rout is not supported for this endpoint");
         }
-        return matchService.getClubVersusOpponentsStats(id, filter);
+        return clubStatsService.getClubVersusOpponentsStats(id, filter);
     }
 
     public HeadToHeadResponseDto getHeadToHeadStats(Long clubId, Long opponentId, MatchFilterEnum filter) {
@@ -70,11 +76,11 @@ public class ClubService {
         if (clubId.equals(opponentId)) {
             throw new BusinessException("Head-to-head comparison requires two different clubs");
         }
-        return matchService.getHeadToHeadStats(clubId, opponentId, filter);
+        return clubStatsService.getHeadToHeadStats(clubId, opponentId, filter);
     }
 
     public List<ClubRankingDto> getClubRanking(RankingOrderEnum rankingOrder) {
-        return matchService.getClubRanking(rankingOrder);
+        return clubStatsService.getClubRanking(rankingOrder);
     }
 
     public ClubResponseDto save(ClubRequestDto clubRequestDto) {
@@ -82,6 +88,7 @@ public class ClubService {
         StateEntity homeState = stateService.findByCode(stateEnum);
 
         ClubEntity club = clubMapper.toEntity(clubRequestDto, homeState);
+        club.setUuid(UUID.randomUUID());
         ClubEntity savedClub = clubRepository.save(club);
 
         return clubMapper.toDto(savedClub);

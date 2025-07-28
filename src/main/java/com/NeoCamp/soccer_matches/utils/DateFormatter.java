@@ -1,4 +1,4 @@
-package com.neocamp.soccer_matches.testUtils;
+package com.neocamp.soccer_matches.utils;
 
 import java.time.format.DateTimeFormatter;
 

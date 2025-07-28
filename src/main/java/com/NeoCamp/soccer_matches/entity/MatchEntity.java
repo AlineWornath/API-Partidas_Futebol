@@ -1,11 +1,15 @@
 package com.neocamp.soccer_matches.entity;
 
+import com.neocamp.soccer_matches.enums.MatchStatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "match_table")
@@ -16,6 +20,10 @@ public class MatchEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(unique = true, length = 36)
+    private UUID uuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_club_id", nullable = false)
@@ -33,6 +41,9 @@ public class MatchEntity {
     private StadiumEntity stadium;
 
     private LocalDateTime matchDatetime;
+
+    @Enumerated(EnumType.STRING)
+    private MatchStatusEnum status;
 
     public MatchEntity(ClubEntity homeClub, ClubEntity awayClub, Integer homeGoals, Integer awayGoals,
                        StadiumEntity stadium, LocalDateTime matchDatetime) {

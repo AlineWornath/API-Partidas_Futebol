@@ -5,11 +5,16 @@ import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
+import com.neocamp.soccer_matches.enums.MatchStatusEnum;
+import com.neocamp.soccer_matches.messagingrabbitmq.dto.MatchInfoMessageDto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class MatchMockUtils {
 
+    public static final UUID MATCH_UUID = UUID.randomUUID();
+    public static final MatchStatusEnum SCHEDULED_STATUS = MatchStatusEnum.SCHEDULED;
     public static final Long FLAMENGO_ID = 1L;
     public static final String FLAMENGO_NAME = "Flamengo";
     public static final Long CORINTHIANS_ID = 2L;
@@ -26,8 +31,10 @@ public class MatchMockUtils {
         ClubEntity flamengo = ClubMockUtils.flamengo();
         ClubEntity corinthians = ClubMockUtils.corinthians();
         StadiumEntity maracana = StadiumMockUtils.maracana();
-        return new MatchEntity(flamengo, corinthians, 1, 2,
+        MatchEntity match = new MatchEntity(flamengo, corinthians, 1, 2,
                 maracana, LocalDateTime.of(2020, 1, 1, 12, 40));
+        match.setUuid(MATCH_UUID);
+        return match;
     }
 
     public static MatchEntity corinthiansVsGremioAtMorumbi(){
@@ -36,11 +43,6 @@ public class MatchMockUtils {
         StadiumEntity morumbi = StadiumMockUtils.morumbi();
         return new MatchEntity(corinthians, gremio, 1, 2,
                 morumbi, LocalDateTime.of(2023, 4, 25, 15, 45));
-    }
-
-    public static MatchEntity custom(ClubEntity homeClub, ClubEntity awayClub, int homeGoals,
-                                            int awayGoals, StadiumEntity stadium){
-        return new MatchEntity(homeClub, awayClub, homeGoals, awayGoals, stadium, LocalDateTime.now());
     }
 
     public static MatchRequestDto flamengoVsCorinthiansAtMaracanaRequestDto(){
@@ -59,23 +61,30 @@ public class MatchMockUtils {
     }
 
     public static MatchResponseDto flamengoVsCorinthiansAtMaracanaResponseDto(){
-        return new MatchResponseDto(1L, FLAMENGO_ID, FLAMENGO_NAME,
+        return new MatchResponseDto(1L, MATCH_UUID.toString(), FLAMENGO_ID, FLAMENGO_NAME,
                 CORINTHIANS_ID, CORINTHIANS_NAME,
-                1, 2, MARACANA_ID, MARACANA_NAME ,
-                LocalDateTime.of(2005, 5, 12, 13, 30));
+                1, 2, MARACANA_ID, MARACANA_NAME,
+                LocalDateTime.of(2005, 5, 12, 13, 30), SCHEDULED_STATUS);
     }
 
     public static MatchResponseDto corinthiansVsGremioAtMorumbiResponseDto(){
-        return new MatchResponseDto(2L, CORINTHIANS_ID, CORINTHIANS_NAME,
+        return new MatchResponseDto(2L, MATCH_UUID.toString(), CORINTHIANS_ID, CORINTHIANS_NAME,
                 GREMIO_ID, GREMIO_NAME,
                 2, 0, MORUMBI_ID, MORUMBI_NAME,
-                LocalDateTime.of(2000, 12, 23, 14, 45));
+                LocalDateTime.of(2000, 12, 23, 14, 45), SCHEDULED_STATUS);
     }
 
     public static MatchResponseDto customResponse(Long id, Long homeClubId, String homeClubName, Long awayClubId,
                                                   String awayClubName, int homeGoals, int awayGoals, Long stadiumId,
                                                   String stadiumName){
-        return new MatchResponseDto(id, homeClubId, homeClubName, awayClubId, awayClubName, homeGoals, awayGoals,
-                stadiumId, stadiumName, LocalDateTime.of(2002, 6, 18, 15, 30));
+        return new MatchResponseDto(id, MATCH_UUID.toString(), homeClubId, homeClubName, awayClubId, awayClubName, homeGoals,
+                awayGoals, stadiumId, stadiumName,
+                LocalDateTime.of(2002, 6, 18, 15, 30), SCHEDULED_STATUS);
+    }
+
+    public static MatchInfoMessageDto matchInfoMessageDto(UUID matchId){
+        return new MatchInfoMessageDto(matchId.toString(), ClubMockUtils.FLAMENGO_UUID.toString(),
+                ClubMockUtils.CORINTHIANS_UUID.toString(), StadiumMockUtils.MARACANA_UUID.toString(),
+                LocalDateTime.of(2005, 5, 12, 13, 30), SCHEDULED_STATUS);
     }
 }

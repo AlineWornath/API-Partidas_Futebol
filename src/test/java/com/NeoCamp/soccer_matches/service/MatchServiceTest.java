@@ -1,17 +1,15 @@
 package com.neocamp.soccer_matches.service;
 
-import com.neocamp.soccer_matches.dto.club.ClubRankingDto;
-import com.neocamp.soccer_matches.dto.club.ClubVersusClubStatsDto;
-import com.neocamp.soccer_matches.dto.match.HeadToHeadResponseDto;
+import com.neocamp.soccer_matches.dto.match.FinishMatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
-import com.neocamp.soccer_matches.enums.MatchFilterEnum;
-import com.neocamp.soccer_matches.enums.RankingOrderEnum;
+import com.neocamp.soccer_matches.enums.MatchStatusEnum;
+import com.neocamp.soccer_matches.exception.BusinessException;
 import com.neocamp.soccer_matches.mapper.MatchMapper;
-import com.neocamp.soccer_matches.repository.ClubRepository;
+import com.neocamp.soccer_matches.messagingrabbitmq.MatchResultPublisher;
 import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.MatchMockUtils;
@@ -22,9 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -37,6 +33,7 @@ import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 public class MatchServiceTest {
+
     @Mock
     private MatchRepository matchRepository;
 
@@ -47,17 +44,20 @@ public class MatchServiceTest {
     private ExistenceValidator existenceValidator;
 
     @Mock
-    private ClubRepository clubRepository;
+    private ClubService clubService;
 
     @Mock
     private StadiumService stadiumService;
+
+    @Mock
+    private MatchResultPublisher matchResultPublisher;
 
     @InjectMocks
     private MatchService matchService;
 
     private Pageable pageable;
-    private ClubEntity corinthiansEntity, flamengoEntity, gremioEntity;
-    private StadiumEntity maracanaEntity, morumbiEntity;
+    private ClubEntity corinthiansEntity, gremioEntity;
+    private StadiumEntity morumbiEntity;
     private MatchEntity flamengoVsCorinthiansAtMaracana, corinthiansVsGremioAtMorumbi;
     private MatchRequestDto corinthiansVsGremioRequestDto;
     private MatchResponseDto flamengoVsCorinthiansResponseDto, corinthiansVsGremioResponseDto;
@@ -67,10 +67,8 @@ public class MatchServiceTest {
         pageable = PageRequest.of(0, 10);
 
         corinthiansEntity = ClubMockUtils.corinthians();
-        flamengoEntity = ClubMockUtils.flamengo();
         gremioEntity = ClubMockUtils.gremio();
 
-        maracanaEntity = StadiumMockUtils.maracana();
         morumbiEntity = StadiumMockUtils.morumbi();
 
         flamengoVsCorinthiansAtMaracana = MatchMockUtils.flamengoVsCorinthiansAtMaracana();
@@ -84,336 +82,214 @@ public class MatchServiceTest {
 
     @Test
     public void shouldListAllMatches_whenAllFiltersAreNull() {
-        Page<MatchEntity> matches = new PageImpl<>(List.of(
-                flamengoVsCorinthiansAtMaracana, corinthiansVsGremioAtMorumbi));
-
-        Mockito.when(matchRepository.listMatchesByFilters(null, null, null, pageable))
-                .thenReturn(matches);
+        Page<MatchEntity> matchPage = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana, corinthiansVsGremioAtMorumbi));
+        Mockito.when(matchRepository.listMatchesByFilters(null, null, null, pageable)).thenReturn(matchPage);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
-
-        Page<MatchResponseDto> result = matchService.listMatchesByFilters(null, null,
-                null, pageable);
-
-        Assertions.assertEquals(2,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
-    }
-
-    @Test
-    public void shouldListMatchesByClubId(){
-        Long flamengoId = flamengoEntity.getId();
-
-        Page<MatchEntity> matches = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
-
-        Mockito.doNothing().when(existenceValidator).validateClubExists(flamengoId);
-        Mockito.when(matchRepository.listMatchesByFilters(flamengoId, null, null, pageable))
-                .thenReturn(matches);
-        Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
-
-        Page<MatchResponseDto> result = matchService.listMatchesByFilters(flamengoId, null,
-                null, pageable);
-
-        Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
-    }
-
-    @Test
-    public void shouldListMatchesByStadiumId(){
-        Long morumbiId = morumbiEntity.getId();
-
-        Page<MatchEntity> matches = new PageImpl<>(List.of(corinthiansVsGremioAtMorumbi));
-
-        Mockito.doNothing().when(existenceValidator).validateStadiumExists(morumbiId);
-        Mockito.when(matchRepository.listMatchesByFilters(null, morumbiId,null, pageable))
-                .thenReturn(matches);
         Mockito.when(matchMapper.toDto(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioResponseDto);
 
-        Page<MatchResponseDto> result = matchService.listMatchesByFilters(null, morumbiId, null, pageable);
+        Page<MatchResponseDto> result = matchService.listMatchesByFilters(null, null, null, pageable);
 
-        Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getHomeClubName());
-        Assertions.assertEquals("Grêmio", result.getContent().getFirst().getAwayClubName());
+        Assertions.assertEquals(2, result.getTotalElements());
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result.getContent().get(0));
+        Assertions.assertEquals(corinthiansVsGremioResponseDto, result.getContent().get(1));
     }
 
     @Test
-    public void shouldListMatchesByClubIdAndStadiumId(){
-        Long corinthiansId = corinthiansEntity.getId();
-        Long maracanaId = maracanaEntity.getId();
-
-        Page<MatchEntity> matches = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
-
-        Mockito.doNothing().when(existenceValidator).validateClubExists(corinthiansId);
-        Mockito.doNothing().when(existenceValidator).validateStadiumExists(maracanaId);
-        Mockito.when(matchRepository.listMatchesByFilters(corinthiansId, maracanaId, null, pageable)).
-                thenReturn(matches);
+    public void shouldListMatchesByClubId() {
+        Long clubId = 1L;
+        Page<MatchEntity> matchPage = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+        Mockito.when(matchRepository.listMatchesByFilters(clubId, null, null, pageable)).thenReturn(matchPage);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
-        Page<MatchResponseDto> result = matchService.listMatchesByFilters(corinthiansId, maracanaId,
-                null, pageable);
+        Page<MatchResponseDto> result = matchService.listMatchesByFilters(clubId, null, null, pageable);
 
-        Assertions.assertEquals(1,  result.getTotalElements());
-        Assertions.assertEquals("Flamengo", result.getContent().getFirst().getHomeClubName());
-        Assertions.assertEquals("Corinthians", result.getContent().getFirst().getAwayClubName());
-        Assertions.assertEquals("Maracanã", result.getContent().getFirst().getStadiumName());
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result.getContent().getFirst());
     }
 
     @Test
-    public void shouldReturnEmptyPage_whenFiltersDoNotMatchAnyGame(){
-        Long clubId = -2L;
-        Long stadiumId = -25L;
+    public void shouldListMatchesByStadiumId() {
+        Long stadiumId = 1L;
+        Page<MatchEntity> matchPage = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
+        Mockito.doNothing().when(existenceValidator).validateStadiumExists(stadiumId);
+        Mockito.when(matchRepository.listMatchesByFilters(null, stadiumId, null, pageable)).thenReturn(matchPage);
+        Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
-        Page<MatchEntity> emptyPage = Page.empty(pageable);
+        Page<MatchResponseDto> result = matchService.listMatchesByFilters(null, stadiumId, null, pageable);
 
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result.getContent().getFirst());
+    }
+
+    @Test
+    public void shouldListMatchesByClubIdAndStadiumId() {
+        Long clubId = 1L;
+        Long stadiumId = 1L;
+        Page<MatchEntity> matchPage = new PageImpl<>(List.of(flamengoVsCorinthiansAtMaracana));
         Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
         Mockito.doNothing().when(existenceValidator).validateStadiumExists(stadiumId);
-        Mockito.when(matchRepository.listMatchesByFilters(clubId, stadiumId, null, pageable))
-                .thenReturn(emptyPage);
+        Mockito.when(matchRepository.listMatchesByFilters(clubId, stadiumId, null, pageable)).thenReturn(matchPage);
+        Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
         Page<MatchResponseDto> result = matchService.listMatchesByFilters(clubId, stadiumId, null, pageable);
+
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result.getContent().getFirst());
+    }
+
+    @Test
+    public void shouldReturnEmptyPage_whenFiltersDoNotMatchAnyGame() {
+        Long clubId = 999L;
+        Page<MatchEntity> emptyPage = Page.empty();
+        Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
+        Mockito.when(matchRepository.listMatchesByFilters(clubId, null, null, pageable)).thenReturn(emptyPage);
+
+        Page<MatchResponseDto> result = matchService.listMatchesByFilters(clubId, null, null, pageable);
 
         Assertions.assertEquals(0, result.getTotalElements());
     }
 
     @Test
-    public void shouldReturnMatchDtoByIdSuccessfully(){
-        corinthiansVsGremioAtMorumbi.setId(2L);
-        corinthiansVsGremioResponseDto.setId(2L);
+    public void shouldReturnMatchDtoByIdSuccessfully() {
+        Long matchId = 1L;
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(flamengoVsCorinthiansAtMaracana));
+        Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
-        Mockito.when(matchRepository.findById(2L)).thenReturn(Optional.of(corinthiansVsGremioAtMorumbi));
-        Mockito.when(matchMapper.toDto(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioResponseDto);
+        MatchResponseDto result = matchService.findById(matchId);
 
-        MatchResponseDto result = matchService.findById(2L);
-
-        Assertions.assertEquals("Corinthians", result.getHomeClubName());
-        Assertions.assertEquals("Grêmio", result.getAwayClubName());
-        Assertions.assertEquals("Morumbi", result.getStadiumName());
-        Assertions.assertEquals(2L, result.getId());
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result);
     }
 
     @Test
-    public void shouldThrowException_whenFindByIdWithInvalidId(){
-        Long invalidId = -2L;
-
+    public void shouldThrowException_whenFindByIdWithInvalidId() {
+        Long invalidId = 999L;
         Mockito.when(matchRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class,
-                () -> matchService.findById(invalidId));
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class, () ->
+            matchService.findById(invalidId));
 
-        Assertions.assertTrue(exception.getMessage().contains("Match not found: "));
+        Assertions.assertTrue(exception.getMessage().contains("Match not found"));
     }
 
     @Test
-    public void shouldReturnMatchEntityByIdSuccessfully(){
-        flamengoVsCorinthiansAtMaracana.setId(1L);
+    public void shouldReturnMatchEntityByIdSuccessfully() {
+        Long matchId = 1L;
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(flamengoVsCorinthiansAtMaracana));
 
-        Mockito.when(matchRepository.findById(1L)).thenReturn(Optional.of(flamengoVsCorinthiansAtMaracana));
+        MatchEntity result = matchService.findEntityById(matchId);
 
-        MatchEntity result = matchService.findEntityById(1L);
-
-        Assertions.assertEquals("Flamengo", result.getHomeClub().getName());
-        Assertions.assertEquals("Corinthians", result.getAwayClub().getName());
-        Assertions.assertEquals("Maracanã", result.getStadium().getName());
-        Assertions.assertEquals(1L, result.getId());
+        Assertions.assertEquals(flamengoVsCorinthiansAtMaracana, result);
     }
 
     @Test
-    public void shouldThrowException_whenFindEntityByIdInvalidId(){
-        Long invalidId = -10L;
-
+    public void shouldThrowException_whenFindEntityByIdInvalidId() {
+        Long invalidId = 999L;
         Mockito.when(matchRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class,
-                () -> matchService.findEntityById(invalidId));
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class, () ->
+            matchService.findEntityById(invalidId));
 
-        Assertions.assertTrue(exception.getMessage().contains("Match not found: "));
+        Assertions.assertTrue(exception.getMessage().contains("Match not found"));
     }
 
     @Test
-    public void shouldSaveMatchSuccessfully(){
-        Long homeClubId = corinthiansVsGremioRequestDto.getHomeClubId();
-        Long awayClubId = corinthiansVsGremioRequestDto.getAwayClubId();
-        Long stadiumId = corinthiansVsGremioRequestDto.getStadiumId();
-
-        Mockito.when(clubRepository.findById(homeClubId)).thenReturn(Optional.of(corinthiansEntity));
-        Mockito.when(clubRepository.findById(awayClubId)).thenReturn(Optional.of(gremioEntity));
-        Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(morumbiEntity);
-        Mockito.when(matchMapper.toEntity(corinthiansVsGremioRequestDto, corinthiansEntity,
-                gremioEntity, morumbiEntity)).thenReturn(corinthiansVsGremioAtMorumbi);
-        Mockito.when(matchRepository.save(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioAtMorumbi);
+    public void shouldSaveMatchSuccessfully() {
+        Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getHomeClubId())).thenReturn(corinthiansEntity);
+        Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getAwayClubId())).thenReturn(gremioEntity);
+        Mockito.when(stadiumService.findEntityById(corinthiansVsGremioRequestDto.getStadiumId())).thenReturn(morumbiEntity);
+        Mockito.when(matchMapper.toEntity(corinthiansVsGremioRequestDto, corinthiansEntity, gremioEntity, morumbiEntity)).thenReturn(corinthiansVsGremioAtMorumbi);
+        Mockito.when(matchRepository.save(Mockito.any(MatchEntity.class))).thenReturn(corinthiansVsGremioAtMorumbi);
         Mockito.when(matchMapper.toDto(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioResponseDto);
 
         MatchResponseDto result = matchService.save(corinthiansVsGremioRequestDto);
 
-        Assertions.assertEquals("Corinthians", result.getHomeClubName());
-        Assertions.assertEquals("Grêmio", result.getAwayClubName());
-        Assertions.assertEquals("Morumbi", result.getStadiumName());
+        Assertions.assertEquals(corinthiansVsGremioResponseDto, result);
+        ArgumentCaptor<MatchEntity> matchCaptor = ArgumentCaptor.forClass(MatchEntity.class);
+        Mockito.verify(matchRepository).save(matchCaptor.capture());
+        MatchEntity savedMatch = matchCaptor.getValue();
+        Assertions.assertNotNull(savedMatch.getUuid());
     }
 
     @Test
-    public void shouldThrowException_whenSaveMatchWithUnknownHomeClub(){
-        Long unknownHomeClubId = -1L;
-        Long awayClubId = 2L;
-        Long stadiumId = 10L;
-        MatchRequestDto matchRequestDto = new MatchRequestDto(unknownHomeClubId, awayClubId, 1, 0,
-                stadiumId, LocalDateTime.of(2019, 1, 1, 0, 0, 0));
+    public void shouldThrowException_whenSaveMatchWithUnknownHomeClub() {
+        Long unknownClubId = 999L;
+        corinthiansVsGremioRequestDto.setHomeClubId(unknownClubId);
 
-        Mockito.when(clubRepository.findById(unknownHomeClubId)).thenReturn(Optional.empty());
+        Mockito.when(clubService.findEntityById(unknownClubId)).thenThrow(new EntityNotFoundException("Club not found"));
 
-        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class,
-                () -> matchService.save(matchRequestDto));
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class, () ->
+            matchService.save(corinthiansVsGremioRequestDto));
 
         Assertions.assertTrue(exception.getMessage().contains("Club not found"));
     }
 
     @Test
-    public void shouldUpdateMatchSuccessfully(){
-        Long existingMatchId = 1L;
-
-        MatchEntity existingMatch = flamengoVsCorinthiansAtMaracana;
-        existingMatch.setId(existingMatchId);
-
-        MatchRequestDto updateRequest = MatchMockUtils.customRequest(gremioEntity.getId(), flamengoEntity.getId(),
-                2, 3, morumbiEntity.getId());
-
-        MatchResponseDto updatedResponse = flamengoVsCorinthiansResponseDto;
-        updatedResponse.setHomeClubName("Grêmio");
-        updatedResponse.setAwayClubName("Flamengo");
-        updatedResponse.setStadiumName("Morumbi");
-
-        Long homeClubId = updateRequest.getHomeClubId();
-        Long awayClubId = updateRequest.getAwayClubId();
-        Long stadiumId = updateRequest.getStadiumId();
-
-        Mockito.when(matchRepository.findById(1L)).thenReturn(Optional.of(existingMatch));
-        Mockito.when(clubRepository.findById(homeClubId)).thenReturn(Optional.of(gremioEntity));
-        Mockito.when(clubRepository.findById(awayClubId)).thenReturn(Optional.of(flamengoEntity));
-        Mockito.when(stadiumService.findEntityById(stadiumId)).thenReturn(morumbiEntity);
-        Mockito.when(matchRepository.save(existingMatch)).thenReturn(existingMatch);
-        Mockito.when(matchMapper.toDto(existingMatch)).thenReturn(updatedResponse);
-
-        MatchResponseDto result = matchService.update(existingMatchId, updateRequest);
-
-        Assertions.assertEquals("Grêmio", result.getHomeClubName());
-        Assertions.assertEquals("Flamengo", result.getAwayClubName());
-        Assertions.assertEquals("Morumbi", result.getStadiumName());
-    }
-
-    @Test
-    public void shouldDeleteMatchSuccessfully(){
-        Long existingMatchId = 1L;
-
-        MatchEntity existingMatch = corinthiansVsGremioAtMorumbi;
-        existingMatch.setId(existingMatchId);
-
-        Mockito.when(matchRepository.findById(existingMatchId)).thenReturn(Optional.of(existingMatch));
-
-        matchService.delete(existingMatchId);
-
-        Mockito.verify(matchRepository, Mockito.times(1)).delete(existingMatch);
-    }
-
-    @Test
-    public void shouldGetHeadToHeadStats_whenNoFilterApplied(){
-        Long clubId = corinthiansEntity.getId();
-        Long opponentId = flamengoEntity.getId();
-
-        ClubVersusClubStatsDto stats = new ClubVersusClubStatsDto();
-        Mockito.when(matchRepository.getHeadToHeadStats(clubId, opponentId, null)).thenReturn(stats);
-
-        List<MatchEntity> matchEntities = List.of(flamengoVsCorinthiansAtMaracana);
-        Mockito.when(matchRepository.getHeadToHeadMatches(clubId, opponentId, null)).thenReturn(matchEntities);
-
+    public void shouldUpdateMatchSuccessfully() {
+        Long matchId = 1L;
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(flamengoVsCorinthiansAtMaracana));
+        Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getHomeClubId())).thenReturn(corinthiansEntity);
+        Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getAwayClubId())).thenReturn(gremioEntity);
+        Mockito.when(stadiumService.findEntityById(corinthiansVsGremioRequestDto.getStadiumId())).thenReturn(morumbiEntity);
+        Mockito.when(matchRepository.save(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansAtMaracana);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
-        HeadToHeadResponseDto result = matchService.getHeadToHeadStats(clubId, opponentId, null);
+        MatchResponseDto result = matchService.update(matchId, corinthiansVsGremioRequestDto);
 
-        Assertions.assertEquals(1, result.getMatches().size());
-        Assertions.assertEquals(stats, result.getStats());
-        Mockito.verify(matchRepository, Mockito.times(1)).getHeadToHeadStats(
-                clubId, opponentId, null);
-        Mockito.verify(matchRepository, Mockito.times(1)).getHeadToHeadMatches(
-                clubId, opponentId, null);
-        Mockito.verify(matchMapper, Mockito.times(1)).toDto(flamengoVsCorinthiansAtMaracana);
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result);
+        Mockito.verify(matchMapper).updateEntityFromDto(corinthiansVsGremioRequestDto, flamengoVsCorinthiansAtMaracana);
     }
 
     @Test
-    public void shouldGetHeadToHeadStats_whenFilterApplied(){
-        Long clubId = corinthiansEntity.getId();
-        Long opponentId = flamengoEntity.getId();
-        MatchFilterEnum filter = MatchFilterEnum.ROUT;
-        String filterString = filter.name();
+    public void shouldDeleteMatchSuccessfully() {
+        Long matchId = 1L;
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(flamengoVsCorinthiansAtMaracana));
 
-        ClubVersusClubStatsDto stats = new ClubVersusClubStatsDto();
-        List<MatchEntity> matchEntities = List.of(flamengoVsCorinthiansAtMaracana);
+        matchService.delete(matchId);
 
-        Mockito.when(matchRepository.getHeadToHeadStats(clubId, opponentId, filterString)).thenReturn(stats);
-        Mockito.when(matchRepository.getHeadToHeadMatches(clubId, opponentId, filterString)).thenReturn(matchEntities);
-        Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
-
-        HeadToHeadResponseDto result = matchService.getHeadToHeadStats(clubId, opponentId, filter);
-
-        Assertions.assertEquals(1, result.getMatches().size());
-        Assertions.assertEquals(stats, result.getStats());
-        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result.getMatches().getFirst());
-        Mockito.verify(matchRepository, Mockito.times(1)).getHeadToHeadStats(
-                clubId, opponentId, filterString);
-        Mockito.verify(matchRepository, Mockito.times(1)).getHeadToHeadMatches(
-                clubId, opponentId, filterString);
-        Mockito.verify(matchMapper).toDto(flamengoVsCorinthiansAtMaracana);
+        Mockito.verify(matchRepository).delete(flamengoVsCorinthiansAtMaracana);
     }
 
     @Test
-    public void shouldReturnClubRankingOrderedByMatches(){
-        List<ClubRankingDto> clubRanking = List.of();
-        Mockito.when(matchRepository.getClubRankingByTotalMatches()).thenReturn(clubRanking);
+    public void shouldFinishMatchSuccessfully() {
+        Long matchId = 1L;
+        int homeGoals = 2;
+        int awayGoals = 1;
+        LocalDateTime endAt = LocalDateTime.now();
+        FinishMatchRequestDto dto = new FinishMatchRequestDto(homeGoals, awayGoals, endAt);
 
-        List<ClubRankingDto> result = matchService.getClubRanking(RankingOrderEnum.MATCHES);
+        MatchEntity match = flamengoVsCorinthiansAtMaracana;
+        match.setStatus(MatchStatusEnum.IN_PROGRESS);
 
-        Assertions.assertEquals(clubRanking, result);
-        Mockito.verify(matchRepository, Mockito.times(1)).getClubRankingByTotalMatches();
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        Mockito.when(matchRepository.save(match)).thenReturn(match);
+        Mockito.when(matchMapper.toDto(match)).thenReturn(flamengoVsCorinthiansResponseDto);
+
+        MatchResponseDto result = matchService.finish(matchId, dto);
+
+        Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result);
+        Assertions.assertEquals(MatchStatusEnum.FINISHED, match.getStatus());
+        Assertions.assertEquals(homeGoals, match.getHomeGoals());
+        Assertions.assertEquals(awayGoals, match.getAwayGoals());
+        Mockito.verify(matchResultPublisher).sendMatchResult(Mockito.any());
     }
 
     @Test
-    public void shouldReturnClubRankingOrderedByWins(){
-        List<ClubRankingDto> clubRanking = List.of();
-        Mockito.when(matchRepository.getClubRankingByTotalWins()).thenReturn(clubRanking);
+    public void shouldThrowException_whenFinishMatchWithStatusAlreadyFinished() {
+        Long matchId = 1L;
+        int homeGoals = 2;
+        int awayGoals = 1;
+        LocalDateTime endAt = LocalDateTime.now();
+        FinishMatchRequestDto dto = new FinishMatchRequestDto(homeGoals, awayGoals, endAt);
 
-        List<ClubRankingDto> result = matchService.getClubRanking(RankingOrderEnum.WINS);
+        MatchEntity match = flamengoVsCorinthiansAtMaracana;
+        match.setStatus(MatchStatusEnum.FINISHED);
 
-        Assertions.assertSame(clubRanking, result);
-        Mockito.verify(matchRepository, Mockito.times(1)).getClubRankingByTotalWins();
-    }
+        Mockito.when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
 
-    @Test
-    public void shouldReturnClubRankingOrderedByGoals(){
-        List<ClubRankingDto> clubRanking = List.of();
-        Mockito.when(matchRepository.getClubRankingByTotalGoals()).thenReturn(clubRanking);
+        BusinessException exception = Assertions.assertThrows(BusinessException.class, () ->
+            matchService.finish(matchId, dto));
 
-        List<ClubRankingDto> result = matchService.getClubRanking(RankingOrderEnum.GOALS);
-
-        Assertions.assertEquals(clubRanking, result);
-        Mockito.verify(matchRepository, Mockito.times(1)).getClubRankingByTotalGoals();
-    }
-
-    @Test
-    public void shouldReturnClubRankingOrderedByPoints(){
-        List<ClubRankingDto> clubRanking = List.of();
-        Mockito.when(matchRepository.getClubRankingByTotalPoints()).thenReturn(clubRanking);
-
-        List<ClubRankingDto> result = matchService.getClubRanking(RankingOrderEnum.POINTS);
-
-        Assertions.assertEquals(clubRanking, result);
-        Mockito.verify(matchRepository, Mockito.times(1)).getClubRankingByTotalPoints();
-    }
-
-    @Test
-    public void shouldThrowException_whenNullRankingOrder(){
-        RankingOrderEnum nullOrder = null;
-
-        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class,
-                () -> matchService.getClubRanking(nullOrder));
-
-        Assertions.assertTrue(exception.getMessage().contains("Unknown ranking order: "));
+        Assertions.assertTrue(exception.getMessage().contains("Match has already been finished"));
     }
 }

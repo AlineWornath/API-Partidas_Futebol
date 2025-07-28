@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "stadium")
@@ -15,6 +19,10 @@ public class StadiumEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(unique = true, length = 36)
+    private UUID uuid;
 
     private String name;
 

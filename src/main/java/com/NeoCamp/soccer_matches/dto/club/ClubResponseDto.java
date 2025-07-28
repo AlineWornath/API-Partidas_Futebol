@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ClubResponseDto {
     private Long id;
+    private String uuid;
     private String name;
     private String homeStateCode;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")

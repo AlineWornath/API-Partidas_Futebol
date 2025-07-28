@@ -1,10 +1,10 @@
-package com.neocamp.soccer_matches.controller;
+package com.neocamp.soccer_matches.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neocamp.soccer_matches.DesafioFutebolApplication;
 import com.neocamp.soccer_matches.dto.stadium.StadiumRequestDto;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
-import com.neocamp.soccer_matches.repository.StadiumRepository;
+import com.neocamp.soccer_matches.testUtils.IntegrationTestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,14 +31,12 @@ public class StadiumControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private StadiumRepository stadiumRepository;
+    private IntegrationTestUtils testUtils;
 
     @Test
     public void shouldListAllStadiums() throws Exception {
-        StadiumEntity beiraRio = new StadiumEntity("Beira-Rio");
-        StadiumEntity morumbi = new StadiumEntity("Morumbi");
-        stadiumRepository.save(beiraRio);
-        stadiumRepository.save(morumbi);
+        StadiumEntity beiraRio = testUtils.createStadium("Beira-Rio", "");
+        StadiumEntity morumbi = testUtils.createStadium("Morumbi", "");
 
         mockMvc.perform(get("/stadiums")
                 .param("page", "0")
@@ -51,8 +49,7 @@ public class StadiumControllerIntegrationTest {
 
     @Test
     public void shouldGetStadiumById() throws Exception {
-        StadiumEntity morumbi = new StadiumEntity("Morumbi");
-        stadiumRepository.save(morumbi);
+        StadiumEntity morumbi = testUtils.createStadium("Morumbi", "");
 
         mockMvc.perform(get("/stadiums/{id}", morumbi.getId()))
                 .andExpect(status().isOk())
@@ -103,8 +100,7 @@ public class StadiumControllerIntegrationTest {
 
     @Test
     public void shouldUpdateStadium() throws Exception {
-        StadiumEntity beiraRio = new StadiumEntity("Beira-Rio");
-        stadiumRepository.save(beiraRio);
+        StadiumEntity beiraRio = testUtils.createStadium("Beira-Rio", "");
 
         StadiumRequestDto updateRequest = new StadiumRequestDto("Maracanã", null);
 

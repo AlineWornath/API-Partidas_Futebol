@@ -46,10 +46,10 @@ public class ClubServiceTest {
     private StateService stateService;
 
     @Mock
-    private MatchService matchService;
+    private ExistenceValidator existenceValidator;
 
     @Mock
-    private ExistenceValidator existenceValidator;
+    private ClubStatsService clubStatsService;
 
     @InjectMocks
     private ClubService clubService;
@@ -245,7 +245,7 @@ public class ClubServiceTest {
                 5L, 9L, 8L, 11L, 15L);
 
         Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
-        Mockito.when(matchService.getClubStats(clubId, null)).thenReturn(mockStats);
+        Mockito.when(clubStatsService.getClubStats(clubId, null)).thenReturn(mockStats);
 
         ClubStatsResponseDto result = clubService.getClubStats(clubId, null);
 
@@ -290,7 +290,7 @@ public class ClubServiceTest {
         List<ClubVersusClubStatsDto> statsList = List.of(mockOpponentStats);
 
         Mockito.doNothing().when(existenceValidator).validateClubExists(id);
-        Mockito.when(matchService.getClubVersusOpponentsStats(id, null)).thenReturn(statsList);
+        Mockito.when(clubStatsService.getClubVersusOpponentsStats(id, null)).thenReturn(statsList);
 
         List<ClubVersusClubStatsDto> result = clubService.getClubVersusOpponentsStats(id, null);
 
@@ -322,14 +322,14 @@ public class ClubServiceTest {
 
         Mockito.doNothing().when(existenceValidator).validateClubExists(clubId);
         Mockito.doNothing().when(existenceValidator).validateClubExists(opponentId);
-        Mockito.when(matchService.getHeadToHeadStats(clubId, opponentId, null)).thenReturn(mockHeadToHeadStats);
+        Mockito.when(clubStatsService.getHeadToHeadStats(clubId, opponentId, null)).thenReturn(mockHeadToHeadStats);
 
         HeadToHeadResponseDto result = clubService.getHeadToHeadStats(clubId, opponentId, null);
 
         Assertions.assertSame(mockHeadToHeadStats, result);
         Mockito.verify(existenceValidator, Mockito.times(1)).validateClubExists(clubId);
         Mockito.verify(existenceValidator, Mockito.times(1)).validateClubExists(opponentId);
-        Mockito.verify(matchService, Mockito.times(1))
+        Mockito.verify(clubStatsService, Mockito.times(1))
                 .getHeadToHeadStats(clubId, opponentId, null);
     }
 

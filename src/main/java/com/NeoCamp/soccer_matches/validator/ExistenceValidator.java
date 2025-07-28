@@ -8,6 +8,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ExistenceValidator {
@@ -18,6 +20,12 @@ public class ExistenceValidator {
     public void validateClubExists(Long id) {
         if (!clubRepository.existsById(id)) {
             throw new EntityNotFoundException("Club not found: "+ id);
+        }
+    }
+
+    public void validateClubExistsByUuid(UUID uuid) {
+        if (!clubRepository.existsByUuid(uuid)) {
+            throw new EntityNotFoundException("Club not found: "+ uuid);
         }
     }
 
@@ -32,6 +40,12 @@ public class ExistenceValidator {
     public void validateStadiumExists(Long id) {
         if (!stadiumRepository.existsById(id)) {
             throw new EntityNotFoundException("Stadium not found: " + id);
+        }
+    }
+
+    public void validateStadiumExistsByUuid(UUID uuid) {
+        if (!stadiumRepository.existsByUuid(uuid)) {
+            throw new EntityNotFoundException("Stadium not found: " + uuid);
         }
     }
 }

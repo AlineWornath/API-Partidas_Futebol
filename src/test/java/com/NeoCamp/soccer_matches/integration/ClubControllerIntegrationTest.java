@@ -1,4 +1,4 @@
-package com.neocamp.soccer_matches.controller;
+package com.neocamp.soccer_matches.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neocamp.soccer_matches.DesafioFutebolApplication;
@@ -6,13 +6,8 @@ import com.neocamp.soccer_matches.dto.club.ClubRequestDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
-import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCodeEnum;
-import com.neocamp.soccer_matches.repository.ClubRepository;
-import com.neocamp.soccer_matches.repository.MatchRepository;
-import com.neocamp.soccer_matches.repository.StadiumRepository;
-import com.neocamp.soccer_matches.repository.StateRepository;
-import com.neocamp.soccer_matches.testUtils.StateTestUtils;
+import com.neocamp.soccer_matches.enums.MatchStatusEnum;
+import com.neocamp.soccer_matches.testUtils.IntegrationTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.neocamp.soccer_matches.testUtils.DateFormatter.CLUB_CREATION_DATE;
+import static com.neocamp.soccer_matches.utils.DateFormatter.CLUB_CREATION_DATE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,45 +39,30 @@ public class ClubControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private ClubRepository clubRepository;
-
-    @Autowired
-    private StateRepository stateRepository;
+    private IntegrationTestUtils testUtils;
 
     private ClubEntity gremio, flamengo, inactiveClub;
-    @Autowired
-    private MatchRepository matchRepository;
-    @Autowired
-    private StadiumRepository stadiumRepository;
 
     @BeforeEach
     public void setup() {
-        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
-        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
+        gremio = testUtils.createClub("Grêmio", "RS", LocalDate.of(1920, 5, 30),
+                true);
 
-        StadiumEntity maracana = new StadiumEntity("Maracanã");
-        stadiumRepository.save(maracana);
+        flamengo = testUtils.createClub("Flamengo", "RJ", LocalDate.of(1970, 2, 10),
+                true);
 
-        gremio = new ClubEntity("Grêmio", rs,
-                LocalDate.of(1950, 3, 24), true);
-        clubRepository.save(gremio);
+        inactiveClub = testUtils.createClub("Inactive Club", "SP",
+                LocalDate.of(1950, 9, 27), false);
 
-        flamengo = new ClubEntity("Flamengo", rj,
-                LocalDate.of(1935, 5, 12), true);
-        clubRepository.save(flamengo);
+        StadiumEntity maracana = testUtils.createStadium("Maracanã", "");
 
-        inactiveClub = new ClubEntity("inactiveClub", rj,
-                LocalDate.of(1919, 10, 1), false);
-        clubRepository.save(inactiveClub);
+        MatchEntity flamengoVsGremioAtMaracana = testUtils.createMatch(flamengo, gremio, 3, 1,
+                maracana, LocalDateTime.of(2023, 3, 2, 15, 45),
+                MatchStatusEnum.IN_PROGRESS);
 
-
-        MatchEntity flamengoVsGremioAtMaracana = new MatchEntity(flamengo, gremio, 3, 1, maracana,
-                LocalDateTime.of(2023, 3, 2, 15, 45));
-        matchRepository.save(flamengoVsGremioAtMaracana);
-
-        MatchEntity gremioVsInactiveClubAtMaracana = new MatchEntity(gremio, inactiveClub, 1, 0, maracana,
-                LocalDateTime.of(2020, 1, 25, 16, 30));
-        matchRepository.save(gremioVsInactiveClubAtMaracana);
+        MatchEntity gremioVsInactiveClubAtMaracana = testUtils.createMatch(gremio, inactiveClub, 1,
+                0, maracana, LocalDateTime.of(2020, 1, 25, 16, 30),
+                MatchStatusEnum.IN_PROGRESS);
     }
 
     @Test
@@ -130,7 +110,7 @@ public class ClubControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(inactiveClub.getId()))
-                .andExpect(jsonPath("$.content[0].name").value("inactiveClub"));
+                .andExpect(jsonPath("$.content[0].name").value("Inactive Club"));
     }
 
     @Test

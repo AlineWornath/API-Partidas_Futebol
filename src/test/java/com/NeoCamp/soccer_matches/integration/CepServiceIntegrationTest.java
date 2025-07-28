@@ -1,6 +1,7 @@
-package com.neocamp.soccer_matches.service;
+package com.neocamp.soccer_matches.integration;
 
 import com.neocamp.soccer_matches.exception.BusinessException;
+import com.neocamp.soccer_matches.service.CepService;
 import com.neocamp.soccer_matches.valueobject.Address;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

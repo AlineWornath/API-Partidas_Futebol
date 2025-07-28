@@ -11,6 +11,7 @@ import org.mapstruct.MappingTarget;
 public interface StadiumMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "uuid", ignore = true)
     @Mapping(target = "address", ignore = true)
     StadiumEntity toEntity(StadiumRequestDto dto);
 
@@ -18,5 +19,6 @@ public interface StadiumMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "address", ignore = true)
+    @Mapping(target = "uuid", ignore = true)
     void updateEntityFromDto(StadiumRequestDto dto, @MappingTarget StadiumEntity entity);
 }

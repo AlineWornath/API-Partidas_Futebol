@@ -1,4 +1,4 @@
-package com.neocamp.soccer_matches.controller;
+package com.neocamp.soccer_matches.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neocamp.soccer_matches.DesafioFutebolApplication;
@@ -6,13 +6,8 @@ import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
-import com.neocamp.soccer_matches.entity.StateEntity;
-import com.neocamp.soccer_matches.enums.StateCodeEnum;
-import com.neocamp.soccer_matches.repository.ClubRepository;
-import com.neocamp.soccer_matches.repository.MatchRepository;
-import com.neocamp.soccer_matches.repository.StadiumRepository;
-import com.neocamp.soccer_matches.repository.StateRepository;
-import com.neocamp.soccer_matches.testUtils.StateTestUtils;
+import com.neocamp.soccer_matches.enums.MatchStatusEnum;
+import com.neocamp.soccer_matches.testUtils.IntegrationTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +38,7 @@ public class MatchControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private StateRepository stateRepository;
-
-    @Autowired
-    private ClubRepository clubRepository;
-
-    @Autowired
-    private MatchRepository matchRepository;
-
-    @Autowired
-    private StadiumRepository stadiumRepository;
+    private IntegrationTestUtils testUtils;
 
     private ClubEntity gremio, flamengo, saoPaulo;
     private StadiumEntity maracana, morumbi;
@@ -60,35 +46,26 @@ public class MatchControllerIntegrationTest {
 
     @BeforeEach
     public void setup() {
-        StateEntity rs = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RS);
-        StateEntity rj = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.RJ);
-        StateEntity sp = StateTestUtils.getStateOrFail(stateRepository, StateCodeEnum.SP);
+        gremio = testUtils.createClub("Grêmio", "RS", LocalDate.of(1950, 3, 24),
+                true);
 
-        gremio = new ClubEntity("Grêmio", rs,
-                LocalDate.of(1950, 3, 24), true);
-        clubRepository.save(gremio);
+        flamengo = testUtils.createClub("Flamengo", "RJ", LocalDate.of(1935, 5, 12),
+                true);
 
-        flamengo = new ClubEntity("Flamengo", rj,
-                LocalDate.of(1935, 5, 12), true);
-        clubRepository.save(flamengo);
+        saoPaulo = testUtils.createClub("São Paulo", "SP", LocalDate.of(1919, 12, 3),
+                true);
 
-        saoPaulo = new ClubEntity("São Paulo", sp,
-                LocalDate.of(1919, 12, 3), true);
-        clubRepository.save(saoPaulo);
+        maracana = testUtils.createStadium("Maracanã", "");
 
-        maracana = new StadiumEntity("Maracanã");
-        stadiumRepository.save(maracana);
+        morumbi = testUtils.createStadium("Morumbi", "");
 
-        morumbi = new StadiumEntity("Morumbi");
-        stadiumRepository.save(morumbi);
+        flamengoVsGremioAtMaracana = testUtils.createMatch(flamengo, gremio, 1, 0,
+                maracana, LocalDateTime.of(2015, 1, 14, 15, 45),
+                MatchStatusEnum.IN_PROGRESS);
 
-        flamengoVsGremioAtMaracana = new MatchEntity(flamengo, gremio, 1, 0,
-                maracana, LocalDateTime.of(2015, 1, 14, 15, 45));
-        matchRepository.save(flamengoVsGremioAtMaracana);
-
-        MatchEntity saoPauloVsGremioAtMorumbi = new MatchEntity(saoPaulo, gremio, 2, 3,
-                morumbi, LocalDateTime.of(2002, 7, 18, 16, 30));
-        matchRepository.save(saoPauloVsGremioAtMorumbi);
+        MatchEntity saoPauloVsGremioAtMorumbi = testUtils.createMatch(saoPaulo, gremio, 2, 3,
+                morumbi, LocalDateTime.of(2002, 7, 18, 16, 30),
+                MatchStatusEnum.IN_PROGRESS);
     }
 
     @Test
