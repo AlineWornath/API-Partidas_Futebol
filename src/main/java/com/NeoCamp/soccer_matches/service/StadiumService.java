@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class StadiumService {
@@ -35,10 +37,16 @@ public class StadiumService {
                 .orElseThrow(() -> new EntityNotFoundException("Stadium not found: " + id));
     }
 
+    public StadiumEntity findByUuid(UUID uuid) {
+        return stadiumRepository.findByUuid(uuid).orElseThrow(
+                () -> new EntityNotFoundException("Stadium not found: " + uuid));
+    }
+
     public StadiumResponseDto save(StadiumRequestDto stadiumRequestDto) {
         StadiumEntity stadium = stadiumMapper.toEntity(stadiumRequestDto);
 
         setAddressByCep(stadium, stadiumRequestDto.getCep());
+        stadium.setUuid(UUID.randomUUID());
 
         StadiumEntity savedStadium = stadiumRepository.save(stadium);
 
