@@ -11,7 +11,9 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = StateMapper.class)
 public interface ClubMapper {
 
+
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "uuid", ignore = true)
     @Mapping(target = "homeState", source = "state")
     @Mapping(target = "name", source = "dto.name")
     ClubEntity toEntity(ClubRequestDto dto, StateEntity state);
@@ -20,6 +22,7 @@ public interface ClubMapper {
     ClubResponseDto toDto(ClubEntity club);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "uuid", ignore = true)
     @Mapping(target = "homeState", ignore = true)
     void updateEntityFromDto(ClubRequestDto dto, @MappingTarget ClubEntity entity);
 }
