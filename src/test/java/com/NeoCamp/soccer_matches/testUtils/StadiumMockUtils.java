@@ -5,17 +5,23 @@ import com.neocamp.soccer_matches.dto.stadium.StadiumResponseDto;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.valueobject.Address;
 
+import java.util.UUID;
+
 public class StadiumMockUtils {
+
+    public static UUID MARACANA_UUID = UUID.randomUUID();
+    public static UUID MORUMBI_UUID = UUID.randomUUID();
+
     public static StadiumEntity maracana() {
         Address address = new Address();
         address.setCity("Rio de Janeiro");
-        return new StadiumEntity(2L, "Maracanã", address);
+        return new StadiumEntity(2L, MARACANA_UUID, "Maracanã", address);
     }
 
     public static StadiumEntity morumbi() {
         Address address = new Address();
         address.setCity("São Paulo");
-        return new StadiumEntity(3L, "Morumbi", address);
+        return new StadiumEntity(3L, MORUMBI_UUID, "Morumbi", address);
     }
 
     public static StadiumEntity custom(String name) {
@@ -35,14 +41,14 @@ public class StadiumMockUtils {
     }
 
     public static StadiumResponseDto maracanaResponseDto() {
-        return new StadiumResponseDto(1L, "Maracanã", null);
+        return new StadiumResponseDto(1L, MARACANA_UUID.toString(), "Maracanã", null);
     }
 
     public static StadiumResponseDto morumbiResponseDto() {
-        return new StadiumResponseDto(2L, "Morumbi", null);
+        return new StadiumResponseDto(2L, MORUMBI_UUID.toString(), "Morumbi", null);
     }
 
     public static StadiumResponseDto customResponse(String name) {
-        return new StadiumResponseDto(2L, name, null);
+        return new StadiumResponseDto(2L, UUID.randomUUID().toString(), name, null);
     }
 }
