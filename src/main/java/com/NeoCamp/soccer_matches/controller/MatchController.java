@@ -1,5 +1,6 @@
 package com.neocamp.soccer_matches.controller;
 
+import com.neocamp.soccer_matches.dto.match.FinishMatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
 import com.neocamp.soccer_matches.enums.MatchFilterEnum;
@@ -51,5 +52,12 @@ public class MatchController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         matchService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PatchMapping("/{id}/finish")
+    public ResponseEntity<MatchResponseDto> finish(@PathVariable Long id,
+                                                   @RequestBody @Valid FinishMatchRequestDto dto) {
+        MatchResponseDto match = matchService.finish(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(match);
     }
 }
