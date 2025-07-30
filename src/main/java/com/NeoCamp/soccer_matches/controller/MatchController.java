@@ -3,6 +3,7 @@ package com.neocamp.soccer_matches.controller;
 import com.neocamp.soccer_matches.dto.match.FinishMatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
+import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.enums.MatchFilterEnum;
 import com.neocamp.soccer_matches.service.MatchService;
 import jakarta.validation.Valid;
@@ -38,13 +39,14 @@ public class MatchController {
 
     @PostMapping
     public ResponseEntity<MatchResponseDto> create(@RequestBody @Valid MatchRequestDto dto) {
-        MatchResponseDto match = matchService.save(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(match);
+        MatchEntity entity = matchService.assembleMatchFromRequestDto(dto);
+        MatchResponseDto response = matchService.save(entity);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<MatchResponseDto> update(@PathVariable Long id, @RequestBody @Valid MatchRequestDto dto) {
-        MatchResponseDto match = matchService.update(id, dto);
+        MatchResponseDto match = matchService.updateFromRequestDto(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(match);
     }
 

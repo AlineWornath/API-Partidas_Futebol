@@ -1,8 +1,6 @@
 package com.neocamp.soccer_matches.service;
 
-import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
-import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.enums.MatchStatusEnum;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.FinishMatchMessageDto;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.MatchInfoMessageDto;
@@ -14,7 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
+
+import static com.neocamp.soccer_matches.utils.UuidUtils.parseUuid;
 
 @Service
 @RequiredArgsConstructor
@@ -26,25 +27,21 @@ public class MatchMessageProcessorService {
     private final Logger LOG = LoggerFactory.getLogger(MatchMessageProcessorService.class);
     
     @Transactional
-    public void processMatchInfoMessage(MatchInfoMessageDto messageDto) {
-        LOG.info("Processing MatchInfoMessageDto: {}", messageDto.getMatchId());
-        validateStatus(messageDto);
+    public void processMatchInfoMessage(MatchInfoMessageDto dto) {
+        LOG.info("Processing MatchInfoMessageDto: {}", dto.getMatchUuid());
+        validateStatus(dto);
 
-        UUID matchUuid = parseUuid(messageDto.getMatchId(), "matchId");
-        UUID homeClubUuid = parseUuid(messageDto.getHomeClubId(), "homeClubId");
-        UUID awayClubUuid = parseUuid(messageDto.getAwayClubId(), "awayClubId");
-        UUID stadiumUuid = parseUuid(messageDto.getStadiumId(), "stadiumId");
+        UUID matchUuid = parseUuid(dto.getMatchUuid(), "matchId");
+        Optional<MatchEntity> existingMatch = matchService.findByUuid(matchUuid);
 
-        existenceValidator.validateClubExistsByUuid(homeClubUuid);
-        existenceValidator.validateClubExistsByUuid(awayClubUuid);
-        existenceValidator.validateStadiumExistsByUuid(stadiumUuid);
-
-        ClubEntity homeClub = clubService.findByUuid(homeClubUuid);
-        ClubEntity awayClub = clubService.findByUuid(awayClubUuid);
-        StadiumEntity stadium = stadiumService.findByUuid(stadiumUuid);
-
-        MatchEntity match = matchService.findOrCreateMatch(matchUuid, messageDto, homeClub, awayClub, stadium);
-        LOG.info("Match saved: uuid={}, status={}", match.getUuid(), match.getStatus());
+        if (existingMatch.isPresent()) {
+            matchService.updateFromMessageDto(dto.getMatchUuid(), dto);
+            LOG.info("Match updated: uuid={}, status={}", matchUuid, dto.getStatus());
+        } else {
+            MatchEntity entity = matchService.assembleMatchFromInfoMessageDto(dto);
+            matchService.save(entity);
+            LOG.info("Match saved: uuid={}, status={}", entity.getUuid(), entity.getStatus());
+        }
     }
     
     @Transactional
@@ -64,16 +61,8 @@ public class MatchMessageProcessorService {
         MatchStatusEnum status = messageDto.getStatus();
         if (status == MatchStatusEnum.FINISHED) {
             LOG.error("Rejected message in 'match.info' queue: status FINISHED is not allowed. matchId={}, payload={}",
-                    messageDto.getMatchId(), messageDto);
+                    messageDto.getMatchUuid(), messageDto);
             throw new IllegalArgumentException("Cannot process match with status FINISHED in 'match.info' queue.");
-        }
-    }
-
-    private UUID parseUuid(String uuidStr, String fieldName) {
-        try{
-            return UUID.fromString(uuidStr);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(fieldName + " is not a valid UUID: " + uuidStr, e);
         }
     }
 }

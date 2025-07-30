@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.neocamp.soccer_matches.utils.UuidUtils.parseUuid;
+
 @Service
 @RequiredArgsConstructor
 public class MatchService {
@@ -65,38 +67,51 @@ public class MatchService {
                 orElseThrow(() -> new EntityNotFoundException("Match not found: " + Id));
     }
 
-    public MatchEntity findByUuid(UUID uuid) {
+    public MatchEntity findByUuidOrThrow(UUID uuid) {
         return matchRepository.findByUuid(uuid).orElseThrow(
                 () -> new EntityNotFoundException("Match not found: " + uuid));
     }
 
+    public Optional<MatchEntity> findByUuid(UUID uuid) {
+        return matchRepository.findByUuid(uuid);
+    }
+
     @Transactional
-    public MatchResponseDto save(MatchRequestDto matchRequestDto) {
-        ClubEntity homeClub = clubService.findEntityById(matchRequestDto.getHomeClubId());
-        ClubEntity awayClub = clubService.findEntityById(matchRequestDto.getAwayClubId());
-        StadiumEntity stadium = stadiumService.findEntityById(matchRequestDto.getStadiumId());
-
-        MatchEntity match = matchMapper.toEntity(matchRequestDto, homeClub, awayClub, stadium);
-        match.setUuid(UUID.randomUUID());
+    public MatchResponseDto save(MatchEntity match) {
         MatchEntity savedMatch = matchRepository.save(match);
-
         return matchMapper.toDto(savedMatch);
     }
 
     @Transactional
-    public MatchResponseDto update(Long id, MatchRequestDto matchRequestDto) {
-        MatchEntity match = findEntityById(id);
-        ClubEntity homeClub = clubService.findEntityById(matchRequestDto.getHomeClubId());
-        ClubEntity awayClub = clubService.findEntityById(matchRequestDto.getAwayClubId());
-        StadiumEntity stadium = stadiumService.findEntityById(matchRequestDto.getStadiumId());
+    public MatchResponseDto updateFromRequestDto(Long id, MatchRequestDto dto) {
+        MatchEntity existingMatch = findEntityById(id);
 
-        matchMapper.updateEntityFromDto(matchRequestDto, match);
-        match.setHomeClub(homeClub);
-        match.setAwayClub(awayClub);
-        match.setStadium(stadium);
-        MatchEntity updatedMatch = matchRepository.save(match);
+       ClubEntity homeClub = clubService.findEntityById(dto.getHomeClubId());
+       ClubEntity awayClub = clubService.findEntityById(dto.getAwayClubId());
+       StadiumEntity stadium = stadiumService.findEntityById(dto.getStadiumId());
 
-        return matchMapper.toDto(updatedMatch);
+        matchMapper.updateEntityFromDto(dto, existingMatch);
+        existingMatch.setHomeClub(homeClub);
+        existingMatch.setAwayClub(awayClub);
+        existingMatch.setStadium(stadium);
+
+        return matchMapper.toDto(matchRepository.save(existingMatch));
+    }
+
+    @Transactional
+    public void updateFromMessageDto(String matchUuid, MatchInfoMessageDto dto) {
+        UUID uuid = parseUuid(matchUuid, "matchUuid");
+        MatchEntity existingMatch = findByUuidOrThrow(uuid);
+
+        ClubEntity homeClub = clubService.findByUuid(parseUuid(dto.getHomeClubUuid(), "homeClubUuid"));
+        ClubEntity awayClub = clubService.findByUuid(parseUuid(dto.getAwayClubUuid(), "awayClubUuid"));
+        StadiumEntity stadium = stadiumService.findByUuid(parseUuid(dto.getStadiumUuid(), "stadiumUuid"));
+
+        matchMapper.updateEntityFromMessageDto(dto, existingMatch, homeClub, awayClub, stadium);
+        existingMatch.setHomeClub(homeClub);
+        existingMatch.setAwayClub(awayClub);
+        existingMatch.setStadium(stadium);
+        matchRepository.save(existingMatch);
     }
 
     public void delete(Long id) {
@@ -113,7 +128,7 @@ public class MatchService {
         } catch (NumberFormatException e) {
             try {
                 UUID uuid = UUID.fromString(matchIdOrUuid);
-                match = findByUuid(uuid);
+                match = findByUuidOrThrow(uuid);
             } catch (IllegalArgumentException ex) {
                 throw new IllegalArgumentException("Invalid match identifier: " + matchIdOrUuid);
             }
@@ -140,35 +155,40 @@ public class MatchService {
 
         return matchMapper.toDto(match);
     }
-    
+
     @Transactional
     public MatchResponseDto finish(Long matchId, FinishMatchRequestDto dto) {
         return finish(matchId.toString(), dto);
     }
 
-    @Transactional
-    public MatchEntity findOrCreateMatch(UUID matchUuid, MatchInfoMessageDto messageDto, ClubEntity homeClub,
-                                          ClubEntity awayClub, StadiumEntity stadium) {
-        Optional<MatchEntity> optionalMatch = matchRepository.findByUuid(matchUuid);
-        MatchEntity match;
-        if (optionalMatch.isPresent()) {
-            match = optionalMatch.get();
-            matchMapper.updateEntityFromMessageDto(messageDto, match, homeClub, awayClub, stadium);
-        } else {
-            match = matchMapper.fromMessageDto(messageDto, homeClub, awayClub, stadium);
-            match.setUuid(matchUuid);
-        }
-        return matchRepository.save(match);
+    public MatchEntity assembleMatchFromRequestDto(MatchRequestDto matchRequestDto) {
+        ClubEntity homeClub = clubService.findEntityById(matchRequestDto.getHomeClubId());
+        ClubEntity awayClub = clubService.findEntityById(matchRequestDto.getAwayClubId());
+        StadiumEntity stadium = stadiumService.findEntityById(matchRequestDto.getStadiumId());
+
+        return matchMapper.toEntity(matchRequestDto, homeClub, awayClub, stadium);
     }
 
-    private MatchResultMessageDto buildResultMessage(MatchEntity match, LocalDateTime endAt) {
-        String[] winner = getWinner(match);
+    public MatchEntity assembleMatchFromInfoMessageDto(MatchInfoMessageDto matchInfoMessageDto) {
+        UUID homeClubUuid = parseUuid(matchInfoMessageDto.getHomeClubUuid(), "homeClubUuid");
+        UUID awayClubUuid = parseUuid(matchInfoMessageDto.getAwayClubUuid(), "awayClubUuid");
+        UUID stadiumUuid = parseUuid(matchInfoMessageDto.getStadiumUuid(), "stadiumUuid");
+
+        ClubEntity homeClub = clubService.findByUuid(homeClubUuid);
+        ClubEntity awayClub = clubService.findByUuid(awayClubUuid);
+        StadiumEntity stadium = stadiumService.findByUuid(stadiumUuid);
+
+        return matchMapper.fromMessageDto(matchInfoMessageDto, homeClub, awayClub, stadium);
+    }
+
+    private MatchResultMessageDto buildResultMessage(MatchEntity existingMatch, LocalDateTime endAt) {
+        String[] winner = getWinner(existingMatch);
         String winnerId = winner[0];
         String winnerName = winner[1];
 
-        List<ClubScoreDto> clubScores = buildClubScores(match);
+        List<ClubScoreDto> clubScores = buildClubScores(existingMatch);
 
-        return new MatchResultMessageDto(match.getUuid().toString(), winnerId, winnerName, clubScores, endAt);
+        return new MatchResultMessageDto(existingMatch.getUuid().toString(), winnerId, winnerName, clubScores, endAt);
     }
 
     private List<ClubScoreDto> buildClubScores(MatchEntity match) {
