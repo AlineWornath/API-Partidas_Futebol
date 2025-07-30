@@ -37,7 +37,7 @@ public class FinishMatchListener {
         }
     }
 
-    @RabbitListener(queues = "match.finish")
+    @RabbitListener(queues = "${queue.match.finish}")
     public void handleFinishMatch(FinishMatchMessageDto message) {
         LOG.info("Received finish match message: matchId={}, homeGoals={}, awayGoals={}, endAt={}", 
                 message.getMatchId(), message.getHomeGoals(), message.getAwayGoals(), message.getEndAt());
