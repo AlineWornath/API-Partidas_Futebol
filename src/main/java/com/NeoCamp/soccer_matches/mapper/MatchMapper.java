@@ -36,13 +36,13 @@ public interface MatchMapper {
     void updateEntityFromDto(MatchRequestDto dto, @MappingTarget MatchEntity entity);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "uuid", source = "dto.matchId")
+    @Mapping(target = "uuid", source = "dto.matchUuid")
     @Mapping(target = "homeGoals", constant = "0")
     @Mapping(target = "awayGoals", constant = "0")
     MatchEntity fromMessageDto(MatchInfoMessageDto dto, ClubEntity homeClub, ClubEntity awayClub, StadiumEntity stadium);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "uuid", source = "dto.matchId")
+    @Mapping(target = "uuid", source = "dto.matchUuid")
     @Mapping(target = "homeClub", source = "homeClub")
     @Mapping(target = "homeGoals", constant = "0")
     @Mapping(target = "awayGoals", constant = "0")
