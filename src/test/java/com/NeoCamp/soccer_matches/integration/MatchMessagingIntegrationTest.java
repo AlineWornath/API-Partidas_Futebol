@@ -72,10 +72,10 @@ public class MatchMessagingIntegrationTest {
         rabbitTemplate.convertAndSend("match.info", messageDto);
 
         Awaitility.await()
-                .atMost(15, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
-                    MatchEntity match = matchService.findByUuid(matchId);
+                    MatchEntity match = matchService.findByUuidOrThrow(matchId);
                     Assertions.assertEquals(MatchStatusEnum.IN_PROGRESS, match.getStatus());
                     Assertions.assertEquals(homeClub.getId(), match.getHomeClub().getId());
                     Assertions.assertEquals(awayClub.getId(), match.getAwayClub().getId());
@@ -88,17 +88,17 @@ public class MatchMessagingIntegrationTest {
         rabbitTemplate.convertAndSend("match.finish", finishDto);
 
         Awaitility.await()
-                .atMost(15, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
-                    MatchEntity match = matchService.findByUuid(matchId);
+                    MatchEntity match = matchService.findByUuidOrThrow(matchId);
                     Assertions.assertEquals(MatchStatusEnum.FINISHED, match.getStatus());
                     Assertions.assertEquals(homeGoals, match.getHomeGoals());
                     Assertions.assertEquals(awayGoals, match.getAwayGoals());
                 });
 
         Awaitility.await()
-                .atMost(15, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     String jsonMessage = (String) rabbitTemplate.receiveAndConvert("match.result");

@@ -3,6 +3,7 @@ package com.neocamp.soccer_matches.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neocamp.soccer_matches.dto.match.MatchRequestDto;
 import com.neocamp.soccer_matches.dto.match.MatchResponseDto;
+import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.service.MatchService;
 import com.neocamp.soccer_matches.testUtils.MatchMockUtils;
@@ -155,9 +156,11 @@ public class MatchControllerTest {
     @Test
     public void shouldReturn201AndMatchDetails_whenCreateValidMatch() throws Exception {
         MatchRequestDto requestDto = MatchMockUtils.flamengoVsCorinthiansAtMaracanaRequestDto();
+        MatchEntity entity= MatchMockUtils.flamengoVsCorinthiansAtMaracana();
         MatchResponseDto responseDto = MatchMockUtils.flamengoVsCorinthiansAtMaracanaResponseDto();
 
-        Mockito.when(matchService.save(requestDto)).thenReturn(responseDto);
+        Mockito.when(matchService.assembleMatchFromRequestDto(requestDto)).thenReturn(entity);
+        Mockito.when(matchService.save(entity)).thenReturn(responseDto);
 
         mockMvc.perform(post("/matches")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -195,7 +198,7 @@ public class MatchControllerTest {
         MatchResponseDto updatedResponseDto = MatchMockUtils.customResponse(matchId, homeClubId, homeClubName, awayClubId,
                 awayClubName, homeGoals, awayGoals, stadiumId, stadiumName);
 
-        Mockito.when(matchService.update(matchId, updateRequestDto)).thenReturn(updatedResponseDto);
+        Mockito.when(matchService.updateFromRequestDto(matchId, updateRequestDto)).thenReturn(updatedResponseDto);
 
         mockMvc.perform(put("/matches/{id}", matchId)
                 .contentType(MediaType.APPLICATION_JSON)

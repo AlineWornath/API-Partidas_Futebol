@@ -3,10 +3,10 @@
   "title": "MatchInfoMessage",
   "type": "object",
   "required": [
-    "matchId",
-    "homeClubId",
-    "awayClubId",
-    "stadiumId",
+    "matchUuid",
+    "homeClubUuid",
+    "awayClubUuid",
+    "stadiumUuid",
     "matchDatetime",
     "status"
   ],

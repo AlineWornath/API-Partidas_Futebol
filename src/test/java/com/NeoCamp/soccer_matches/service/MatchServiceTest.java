@@ -198,17 +198,17 @@ public class MatchServiceTest {
         Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getHomeClubId())).thenReturn(corinthiansEntity);
         Mockito.when(clubService.findEntityById(corinthiansVsGremioRequestDto.getAwayClubId())).thenReturn(gremioEntity);
         Mockito.when(stadiumService.findEntityById(corinthiansVsGremioRequestDto.getStadiumId())).thenReturn(morumbiEntity);
-        Mockito.when(matchMapper.toEntity(corinthiansVsGremioRequestDto, corinthiansEntity, gremioEntity, morumbiEntity)).thenReturn(corinthiansVsGremioAtMorumbi);
-        Mockito.when(matchRepository.save(Mockito.any(MatchEntity.class))).thenReturn(corinthiansVsGremioAtMorumbi);
+
+        Mockito.when(matchMapper.toEntity(corinthiansVsGremioRequestDto, corinthiansEntity, gremioEntity, morumbiEntity)).
+                thenReturn(corinthiansVsGremioAtMorumbi);
+        Mockito.when(matchRepository.save(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioAtMorumbi);
         Mockito.when(matchMapper.toDto(corinthiansVsGremioAtMorumbi)).thenReturn(corinthiansVsGremioResponseDto);
 
-        MatchResponseDto result = matchService.save(corinthiansVsGremioRequestDto);
+        MatchEntity entity = matchService.assembleMatchFromRequestDto(corinthiansVsGremioRequestDto);
+        MatchResponseDto result = matchService.save(entity);
 
         Assertions.assertEquals(corinthiansVsGremioResponseDto, result);
-        ArgumentCaptor<MatchEntity> matchCaptor = ArgumentCaptor.forClass(MatchEntity.class);
-        Mockito.verify(matchRepository).save(matchCaptor.capture());
-        MatchEntity savedMatch = matchCaptor.getValue();
-        Assertions.assertNotNull(savedMatch.getUuid());
+        Mockito.verify(matchRepository).save(corinthiansVsGremioAtMorumbi);
     }
 
     @Test
@@ -218,8 +218,10 @@ public class MatchServiceTest {
 
         Mockito.when(clubService.findEntityById(unknownClubId)).thenThrow(new EntityNotFoundException("Club not found"));
 
-        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class, () ->
-            matchService.save(corinthiansVsGremioRequestDto));
+        EntityNotFoundException exception = Assertions.assertThrows(EntityNotFoundException.class, () -> {
+                MatchEntity entity = matchService.assembleMatchFromRequestDto(corinthiansVsGremioRequestDto);
+                matchService.save(entity);
+            });
 
         Assertions.assertTrue(exception.getMessage().contains("Club not found"));
     }
@@ -234,7 +236,7 @@ public class MatchServiceTest {
         Mockito.when(matchRepository.save(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansAtMaracana);
         Mockito.when(matchMapper.toDto(flamengoVsCorinthiansAtMaracana)).thenReturn(flamengoVsCorinthiansResponseDto);
 
-        MatchResponseDto result = matchService.update(matchId, corinthiansVsGremioRequestDto);
+        MatchResponseDto result = matchService.updateFromRequestDto(matchId, corinthiansVsGremioRequestDto);
 
         Assertions.assertEquals(flamengoVsCorinthiansResponseDto, result);
         Mockito.verify(matchMapper).updateEntityFromDto(corinthiansVsGremioRequestDto, flamengoVsCorinthiansAtMaracana);

@@ -14,16 +14,16 @@ import java.time.LocalDateTime;
 public class MatchInfoMessageDto {
 
     @NotNull
-    private String matchId;
+    private String matchUuid;
 
     @NotNull
-    private String homeClubId;
+    private String homeClubUuid;
 
     @NotNull
-    private String awayClubId;
+    private String awayClubUuid;
 
     @NotNull
-    private String stadiumId;
+    private String stadiumUuid;
 
     @NotNull
     private LocalDateTime matchDatetime;

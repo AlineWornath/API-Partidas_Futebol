@@ -36,7 +36,7 @@ public class MatchInfoListener {
         }
     }
 
-    @RabbitListener(queues = "match.info")
+    @RabbitListener(queues = "${queue.match.info}")
     public void receiveMatchInfo(MatchInfoMessageDto message) {
         try {
             String messageJson = objectMapper.writeValueAsString(message);

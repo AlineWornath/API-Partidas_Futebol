@@ -11,6 +11,7 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -19,6 +20,8 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class MatchResultPublisher {
 
+    @Value("${queue.match.result}")
+    private String valueMatchResult;
     private static final Logger LOG = LoggerFactory.getLogger(MatchResultPublisher.class);
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
@@ -43,14 +46,12 @@ public class MatchResultPublisher {
             JSONObject jsonObject = new JSONObject(json);
             matchResultSchema.validate(jsonObject);
 
-            rabbitTemplate.convertAndSend("match.result", json);
+            rabbitTemplate.convertAndSend(valueMatchResult, json);
 
         } catch (org.everit.json.schema.ValidationException e) {
             LOG.error("Error validating match result message: {}", e.getAllMessages());
-            throw new RuntimeException("Invalid match result message: " + e.getAllMessages(), e);
         } catch (Exception e) {
-            LOG.error("Erro publishing match result message: {}", e.getMessage());
-            throw new RuntimeException("Error publishing match result message", e);
+            LOG.error("Error publishing match result message: {}", e.getMessage());
         }
     }
 }

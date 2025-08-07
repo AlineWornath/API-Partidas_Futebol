@@ -46,8 +46,11 @@ public class IntegrationTestUtils {
                                    StadiumEntity stadium, LocalDateTime matchDateTime, MatchStatusEnum status) {
         MatchRequestDto requestDto = new MatchRequestDto(homeClub.getId(), awayClub.getId(), homeGoals, awayGoals,
                 stadium.getId(), matchDateTime);
+
+        MatchEntity match = matchService.assembleMatchFromRequestDto(requestDto);
         
-        MatchResponseDto saved = matchService.save(requestDto);
+        MatchResponseDto saved = matchService.save(match);
+
         return matchService.findEntityById(saved.getId());
     }
     

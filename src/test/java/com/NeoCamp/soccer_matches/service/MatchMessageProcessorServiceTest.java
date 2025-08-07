@@ -1,8 +1,6 @@
 package com.neocamp.soccer_matches.service;
 
-import com.neocamp.soccer_matches.entity.ClubEntity;
 import com.neocamp.soccer_matches.entity.MatchEntity;
-import com.neocamp.soccer_matches.entity.StadiumEntity;
 import com.neocamp.soccer_matches.enums.MatchStatusEnum;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.FinishMatchMessageDto;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.MatchInfoMessageDto;
@@ -10,8 +8,6 @@ import com.neocamp.soccer_matches.dto.match.FinishMatchRequestDto;
 import com.neocamp.soccer_matches.testUtils.ClubMockUtils;
 import com.neocamp.soccer_matches.testUtils.MatchMockUtils;
 import com.neocamp.soccer_matches.testUtils.StadiumMockUtils;
-import com.neocamp.soccer_matches.validator.ExistenceValidator;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,12 +17,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class MatchMessageProcessorServiceTest {
@@ -34,29 +30,9 @@ public class MatchMessageProcessorServiceTest {
     @Mock
     private MatchService matchService;
     
-    @Mock
-    private ClubService clubService;
-    
-    @Mock
-    private StadiumService stadiumService;
-    
-    @Mock
-    private ExistenceValidator existenceValidator;
-    
     @InjectMocks
     private MatchMessageProcessorService messageProcessor;
-    
-    private ClubEntity flamengoEntity;
-    private ClubEntity corinthiansEntity;
-    private StadiumEntity maracanaEntity;
-    
-    @BeforeEach
-    public void setUp() {
-        flamengoEntity = ClubMockUtils.flamengo();
-        corinthiansEntity = ClubMockUtils.corinthians();
-        maracanaEntity = StadiumMockUtils.maracana();
-    }
-    
+
     @Test
     public void shouldCreateMatch_whenProcessMatchInfoMessageWithNewUuid() {
         UUID matchId = UUID.randomUUID();
@@ -69,22 +45,15 @@ public class MatchMessageProcessorServiceTest {
         MatchInfoMessageDto messageDto = new MatchInfoMessageDto(matchId.toString(), homeClubId.toString(),
                 awayClubId.toString(), stadiumId.toString(), matchDateTime, status);
 
-        MatchEntity expectedMatch = MatchMockUtils.flamengoVsCorinthiansAtMaracana();
-        expectedMatch.setUuid(matchId);
+        MatchEntity entity = MatchMockUtils.flamengoVsCorinthiansAtMaracana();
+       entity.setUuid(matchId);
 
-        Mockito.doNothing().when(existenceValidator).validateClubExistsByUuid(homeClubId);
-        Mockito.doNothing().when(existenceValidator).validateClubExistsByUuid(awayClubId);
-        Mockito.doNothing().when(existenceValidator).validateStadiumExistsByUuid(stadiumId);
-
-        when(clubService.findByUuid(homeClubId)).thenReturn(flamengoEntity);
-        when(clubService.findByUuid(awayClubId)).thenReturn(corinthiansEntity);
-        when(stadiumService.findByUuid(stadiumId)).thenReturn(maracanaEntity);
-        when(matchService.findOrCreateMatch(matchId, messageDto, flamengoEntity, corinthiansEntity, maracanaEntity))
-                .thenReturn(expectedMatch);
+        Mockito.when(matchService.findByUuid(matchId)).thenReturn(Optional.empty());
+        Mockito.when(matchService.assembleMatchFromInfoMessageDto(messageDto)).thenReturn(entity);
 
         messageProcessor.processMatchInfoMessage(messageDto);
 
-        verify(matchService).findOrCreateMatch(matchId, messageDto, flamengoEntity, corinthiansEntity, maracanaEntity);
+        verify(matchService).save(entity);
     }
     
     @Test
