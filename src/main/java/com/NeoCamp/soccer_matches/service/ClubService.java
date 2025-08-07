@@ -13,6 +13,9 @@ import com.neocamp.soccer_matches.repository.ClubRepository;
 import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,7 @@ public class ClubService {
         return clubs.map(clubMapper::toDto);
     }
 
+    @Cacheable(value = "clubById", key = "#id")
     public ClubResponseDto findById(Long id) {
         ClubEntity club = clubRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Club not found: " + id));
@@ -94,6 +98,7 @@ public class ClubService {
         return clubMapper.toDto(savedClub);
     }
 
+    @CacheEvict(value = "clubById", key = "#id")
     public ClubResponseDto update(Long id, ClubRequestDto clubRequestDto) {
         ClubEntity club = findEntityById(id);
 
@@ -107,6 +112,7 @@ public class ClubService {
         return clubMapper.toDto(updatedClub);
     }
 
+    @CacheEvict(value = "clubById", key = "#id")
     public void delete(Long id) {
         ClubEntity club = findEntityById(id);
         club.setActive(false);

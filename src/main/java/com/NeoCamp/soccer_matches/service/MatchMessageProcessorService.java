@@ -4,7 +4,6 @@ import com.neocamp.soccer_matches.entity.MatchEntity;
 import com.neocamp.soccer_matches.enums.MatchStatusEnum;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.FinishMatchMessageDto;
 import com.neocamp.soccer_matches.messagingrabbitmq.dto.MatchInfoMessageDto;
-import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import com.neocamp.soccer_matches.dto.match.FinishMatchRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,9 +20,6 @@ import static com.neocamp.soccer_matches.utils.UuidUtils.parseUuid;
 @RequiredArgsConstructor
 public class MatchMessageProcessorService {
     private final MatchService matchService;
-    private final ClubService clubService;
-    private final StadiumService stadiumService;
-    private final ExistenceValidator existenceValidator;
     private final Logger LOG = LoggerFactory.getLogger(MatchMessageProcessorService.class);
     
     @Transactional
