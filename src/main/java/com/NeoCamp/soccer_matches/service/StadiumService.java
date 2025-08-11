@@ -8,6 +8,8 @@ import com.neocamp.soccer_matches.repository.StadiumRepository;
 import com.neocamp.soccer_matches.valueobject.Address;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class StadiumService {
         return stadiums.map(stadiumMapper::toDto);
     }
 
+    @Cacheable(value = "stadiumById", key = "#id")
     public StadiumResponseDto findById(Long id) {
         StadiumEntity stadium = stadiumRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Stadium not found: " + id));
@@ -53,6 +56,7 @@ public class StadiumService {
         return stadiumMapper.toDto(savedStadium);
     }
 
+    @CacheEvict(value = "stadiumById", key = "#id")
     public StadiumResponseDto update(Long id, StadiumRequestDto stadiumRequestDto) {
         StadiumEntity stadium = findEntityById(id);
 

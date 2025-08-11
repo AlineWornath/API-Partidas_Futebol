@@ -18,6 +18,9 @@ import com.neocamp.soccer_matches.repository.MatchRepository;
 import com.neocamp.soccer_matches.validator.ExistenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -56,6 +59,7 @@ public class MatchService {
         return matches.map(matchMapper::toDto);
     }
 
+    @Cacheable(value = "matchById", key = "#id")
     public MatchResponseDto findById(Long id) {
         MatchEntity match = matchRepository.findById(id).
                 orElseThrow(() -> new EntityNotFoundException("Match not found: " + id));
@@ -83,6 +87,7 @@ public class MatchService {
     }
 
     @Transactional
+    @CacheEvict(value = "matchById", key = "#id")
     public MatchResponseDto updateFromRequestDto(Long id, MatchRequestDto dto) {
         MatchEntity existingMatch = findEntityById(id);
 
@@ -99,6 +104,7 @@ public class MatchService {
     }
 
     @Transactional
+    @CacheEvict(value = "matchById", allEntries = true)
     public void updateFromMessageDto(String matchUuid, MatchInfoMessageDto dto) {
         UUID uuid = parseUuid(matchUuid, "matchUuid");
         MatchEntity existingMatch = findByUuidOrThrow(uuid);
@@ -114,12 +120,20 @@ public class MatchService {
         matchRepository.save(existingMatch);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "matches", allEntries = true),
+            @CacheEvict(value = "matchById", key = "#id")
+    })
     public void delete(Long id) {
         MatchEntity match = findEntityById(id);
         matchRepository.delete(match);
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "matches", allEntries = true),
+            @CacheEvict(value = "matchById", key = "#matchIdOrUuid")
+    })
     public MatchResponseDto finish(String matchIdOrUuid, FinishMatchRequestDto dto) {
         MatchEntity match;
         try {
